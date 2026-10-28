@@ -1,6 +1,6 @@
 # 海心云 MQ 管理台
 
-[English](README.md) | 简体中文
+[English](README.md) | 简体中文 | [项目主页](https://cn-cam.github.io/hainmq-console/)
 
 一个现代化、开源的 RabbitMQ 管理与运维控制台。
 

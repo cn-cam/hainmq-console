@@ -1,6 +1,6 @@
 # HainMQ Console
 
-English | [简体中文](README.zh-CN.md)
+English | [简体中文](README.zh-CN.md) | [Website](https://cn-cam.github.io/hainmq-console/)
 
 A modern, open-source management and operations console for RabbitMQ.
 
