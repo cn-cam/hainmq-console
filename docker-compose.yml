@@ -2,7 +2,7 @@ name: hainmq-console
 
 services:
   hainmq-console:
-    image: ${HAINMQ_IMAGE:-hainmq-console:2.1.1}
+    image: ${HAINMQ_IMAGE:-hainmq-console:2.1.2}
     container_name: ${HAINMQ_CONTAINER_NAME:-hainmq-console}
     build: .
     ports:
