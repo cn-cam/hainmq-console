@@ -1,5 +1,5 @@
 export const en = {
-  "app.description": "Modern RabbitMQ management dashboard",
+  "app.description": "Modern MQ management and operations console",
 
   "common.cancel": "Cancel",
   "common.close": "Close",

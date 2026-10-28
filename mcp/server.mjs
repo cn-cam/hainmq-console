@@ -20,7 +20,7 @@ const tools = JSON.parse(
 )
 
 const server = new Server(
-  { name: "rabbitscout-ops", version: "1.0.0" },
+  { name: "hainmq-ops", version: "1.0.0" },
   { capabilities: { tools: {} } },
 )
 
@@ -64,7 +64,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       content: [
         {
           type: "text",
-          text: `RabbitScout Ops MCP error: ${error instanceof Error ? error.message : String(error)}`,
+          text: `HainMQ Ops MCP error: ${error instanceof Error ? error.message : String(error)}`,
         },
       ],
       isError: true,

@@ -1,9 +1,11 @@
 Copyright (c) 2024 Ralve (RabbitScout upstream)
-Copyright (c) 2026 海心云 (modifications in this distribution)
+Copyright (c) 2026 海心云 (HainMQ Console / 海心云 MQ 管理台 modifications)
 
 This project is licensed under the MIT License. The full license text and the
 original permission notice are in LICENSE. See also NOTICE.
 
 "RabbitScout" is used only to attribute the upstream project. This distribution
-does not claim ownership of the upstream project, its trademarks, or its
-branding.
+does not claim ownership of the upstream project, its trademarks, or its branding.
+
+"RabbitMQ" is a trademark of its respective owner. This project is not affiliated
+with, sponsored by, or endorsed by the RabbitMQ project or its trademark owners.

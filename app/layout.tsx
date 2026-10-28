@@ -25,7 +25,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale()
   const branding = getBranding()
   return {
-    title: `${branding.name} · ${branding.productName}`,
+    title: `${branding.name} ${branding.productName}`,
     description: translate(locale, "app.description"),
     applicationName: branding.name,
   }

@@ -1,4 +1,4 @@
-// Mock RabbitMQ Management API server for end-to-end testing RabbitScout.
+// Mock RabbitMQ Management API server for end-to-end testing HainMQ Console.
 // Faithfully mimics response shapes of RabbitMQ 3.13.x and 4.x.
 //
 // Usage: node mock-rabbitmq.mjs [port] [mode]

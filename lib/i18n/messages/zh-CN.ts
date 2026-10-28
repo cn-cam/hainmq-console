@@ -1,7 +1,7 @@
 import type { MessageKey } from "./en"
 
 export const zhCN: Record<MessageKey, string> = {
-  "app.description": "现代化 RabbitMQ 管理台",
+  "app.description": "现代化 MQ 管理与运维控制台",
 
   "common.cancel": "取消",
   "common.close": "关闭",

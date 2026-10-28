@@ -84,8 +84,8 @@ export function buildAlertPayload(
 export function testPayload(): AlertPayload {
   return {
     event: "test",
-    title: "[测试] RabbitScout 运维通知",
-    message: "这是一条来自 RabbitScout 运维模块的测试通知。",
+    title: "[测试] 海心云 MQ 管理台运维通知",
+    message: "这是一条来自海心云 MQ 管理台运维模块的测试通知。",
     severity: "info",
     status: "test",
     target: "test",
@@ -226,7 +226,7 @@ export async function sendWebhook(
 
   if (config.secret) {
     const signature = createHmac("sha256", config.secret).update(body).digest("hex")
-    headers["X-RabbitScout-Signature"] = `sha256=${signature}`
+    headers["X-HainMQ-Signature"] = `sha256=${signature}`
   }
 
   const response = await fetch(config.url, {

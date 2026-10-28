@@ -2,12 +2,16 @@ RabbitScout
 Copyright (c) 2024 Ralve
 https://github.com/Ralve-org/RabbitScout
 
-Modifications for the 海心云 distribution
+HainMQ Console / 海心云 MQ 管理台
+Modifications for the 海心云 MQ 管理台 distribution
 Copyright (c) 2026 海心云
-https://github.com/cn-cam/RabbitScout
+https://github.com/cn-cam/hainmq-console
 
 This project is distributed under the MIT License. The original copyright
 notice and permission notice are retained in the LICENSE file.
 
-"RabbitScout" is used only to attribute the upstream project. This fork does
-not claim ownership of the upstream project, its trademarks, or its branding.
+"RabbitScout" is used only to attribute the upstream project. This distribution
+does not claim ownership of the upstream project, its trademarks, or its branding.
+
+"RabbitMQ" is a trademark of its respective owner. This project is not affiliated
+with, sponsored by, or endorsed by the RabbitMQ project or its trademark owners.

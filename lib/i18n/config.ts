@@ -4,7 +4,7 @@ export type Locale = (typeof LOCALES)[number]
 
 export const DEFAULT_LOCALE: Locale = "en"
 
-export const LOCALE_COOKIE = "rabbitscout-locale"
+export const LOCALE_COOKIE = "hainmq-locale"
 
 export const LOCALE_LABELS: Record<Locale, string> = {
   en: "English",

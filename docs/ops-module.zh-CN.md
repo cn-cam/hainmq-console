@@ -1,6 +1,6 @@
 # 运维模块配置指南
 
-本文档说明 RabbitScout 运维模块的部署、权限、监控、告警、MCP 和模型对话配置。
+本文档说明海心云 MQ 管理台运维模块的部署、权限、监控、告警、MCP 和模型对话配置。
 
 ## 1. 架构与限制
 
@@ -10,7 +10,7 @@
 - 采集、规则评估和通知发送在 Next.js 进程内通过 `instrumentation.ts` 调度。
 - **仅支持单实例部署**。多副本会重复采集、重复告警。
 - 应用停止期间不会采集和告警；重启后恢复，未发送的通知会重试。
-- 现有 RabbitScout 管理页面不受影响。
+- 现有海心云 MQ 管理台页面不受影响。
 
 ## 2. 前置条件
 
@@ -29,9 +29,9 @@
 在 RabbitMQ 中创建一个只读账号，例如：
 
 ```bash
-rabbitmqctl add_user rabbitscout-monitor 'change-me'
-rabbitmqctl set_user_tags rabbitscout-monitor monitoring
-rabbitmqctl set_permissions -p / rabbitscout-monitor '^$' '^$' '.*'
+rabbitmqctl add_user hainmq-monitor 'change-me'
+rabbitmqctl set_user_tags hainmq-monitor monitoring
+rabbitmqctl set_permissions -p / hainmq-monitor '^$' '^$' '.*'
 ```
 
 说明：
@@ -65,7 +65,7 @@ RABBITMQ_HOST=host.docker.internal
 RABBITMQ_PORT=15672
 RABBITMQ_PROTOCOL=http
 
-OPS_RABBITMQ_USERNAME=rabbitscout-monitor
+OPS_RABBITMQ_USERNAME=hainmq-monitor
 OPS_RABBITMQ_PASSWORD=change-me
 
 OPS_ENCRYPTION_KEY=<上一步生成的 base64 密钥>
@@ -104,6 +104,8 @@ npm run dev
 ## 5. 监控目标
 
 首次启动时，如果数据库中没有目标，且设置了 `OPS_RABBITMQ_USERNAME` / `OPS_RABBITMQ_PASSWORD`，系统会自动创建一个名为 `Default` 的目标。
+
+> 注意：默认目标只在数据库没有目标时从环境变量创建。之后修改 `OPS_RABBITMQ_USERNAME` / `OPS_RABBITMQ_PASSWORD` 不会自动更新已保存的目标；请在 `/ops/targets` 编辑目标凭据，或删除目标后重启容器重新创建。
 
 也可以在 `/ops/targets` 手动添加多个目标：
 
@@ -175,7 +177,7 @@ npm run dev
 设置 HMAC 密钥后，请求会带：
 
 ```text
-X-RabbitScout-Signature: sha256=<hex>
+X-HainMQ-Signature: sha256=<hex>
 ```
 
 签名内容是请求体原文。接收端应使用相同密钥校验。
@@ -265,7 +267,7 @@ cp opencode.example.json opencode.json
 {
   "$schema": "https://opencode.ai/config.json",
   "mcp": {
-    "rabbitscout-ops": {
+    "hainmq-ops": {
       "type": "local",
       "command": ["node", "mcp/server.mjs"],
       "enabled": true,
@@ -287,7 +289,7 @@ $env:OPS_MCP_TOKEN="你的 token"
 export OPS_MCP_TOKEN="你的 token"
 ```
 
-在仓库根目录启动 opencode，确认工具列表中出现 `rabbitscout-ops`。修改配置后需要重启 opencode。
+在仓库根目录启动 opencode，确认工具列表中出现 `hainmq-ops`。修改配置后需要重启 opencode。
 
 示例提问：
 
@@ -347,21 +349,21 @@ export OPS_MCP_TOKEN="你的 token"
 
 ## 11. 数据备份与恢复
 
-SQLite 文件位于 Docker 卷 `rabbitscout-data` 的 `/app/data/ops.db`。
+SQLite 文件位于 Docker 卷 `hainmq-data` 的 `/app/data/ops.db`。
 
 备份：
 
 ```bash
-docker run --rm -v rabbitscout_rabbitscout-data:/data -v ${PWD}:/backup alpine \
+docker run --rm -v hainmq-data:/data -v ${PWD}:/backup alpine \
   cp /data/ops.db /backup/ops.db
 ```
 
 恢复：
 
 ```bash
-docker compose stop rabbitscout
+docker compose stop hainmq-console
 # 将备份文件放回卷中的 /app/data/ops.db
-docker compose start rabbitscout
+docker compose start hainmq-console
 ```
 
 建议在停止应用或低峰期备份。

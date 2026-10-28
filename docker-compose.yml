@@ -1,15 +1,18 @@
+name: hainmq-console
+
 services:
-  rabbitscout:
-    image: ${RABBITSCOUT_IMAGE:-rabbitscout:zh-cn}
+  hainmq-console:
+    image: ${HAINMQ_IMAGE:-hainmq-console:2.1.1}
+    container_name: ${HAINMQ_CONTAINER_NAME:-hainmq-console}
     build: .
     ports:
-      - "${RABBITSCOUT_PORT:-3000}:3000"
+      - "${HAINMQ_PORT:-3000}:3000"
     environment:
       - APP_NAME=${APP_NAME:-海心云}
-      - APP_PRODUCT_NAME=${APP_PRODUCT_NAME:-RabbitMQ 管理台}
+      - APP_PRODUCT_NAME=${APP_PRODUCT_NAME:-MQ 管理台}
       - APP_COPYRIGHT=${APP_COPYRIGHT:-© 2026 海心云}
       - APP_LICENSE=${APP_LICENSE:-MIT}
-      - APP_LICENSE_URL=${APP_LICENSE_URL:-https://github.com/cn-cam/RabbitScout/blob/main/LICENSE}
+      - APP_LICENSE_URL=${APP_LICENSE_URL:-https://github.com/cn-cam/hainmq-console/blob/main/LICENSE}
       - APP_ATTRIBUTION=${APP_ATTRIBUTION:-Based on RabbitScout (MIT)}
       - APP_ATTRIBUTION_URL=${APP_ATTRIBUTION_URL:-https://github.com/Ralve-org/RabbitScout}
       - APP_LOGO_URL=${APP_LOGO_URL:-}
@@ -23,7 +26,7 @@ services:
       - OPS_MCP_ALLOW_PEEK=${OPS_MCP_ALLOW_PEEK:-false}
       - OPS_MCP_ALLOWED_VHOSTS=${OPS_MCP_ALLOWED_VHOSTS:-/}
       - OPS_MCP_QUEUE_PREFIXES=${OPS_MCP_QUEUE_PREFIXES:-}
-      - OPS_RABBITMQ_USERNAME=${OPS_RABBITMQ_USERNAME:-}
+      - OPS_RABBITMQ_USERNAME=${OPS_RABBITMQ_USERNAME:-hainmq-monitor}
       - OPS_RABBITMQ_PASSWORD=${OPS_RABBITMQ_PASSWORD:-}
       - OPS_POLL_INTERVAL_MS=${OPS_POLL_INTERVAL_MS:-60000}
       - OPS_ADMIN_USERS=${OPS_ADMIN_USERS:-administrator}
@@ -32,7 +35,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
-      - rabbitscout-data:/app/data
+      - hainmq-data:/app/data
     healthcheck:
       test:
         [
@@ -47,4 +50,5 @@ services:
       start_period: 10s
 
 volumes:
-  rabbitscout-data:
+  hainmq-data:
+    name: hainmq-data

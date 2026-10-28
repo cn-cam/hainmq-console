@@ -1,19 +1,19 @@
-# RabbitScout
+# 海心云 MQ 管理台
 
 [English](README.md) | 简体中文
 
-一个现代化、开源的 RabbitMQ 管理界面，作为 RabbitMQ 默认 Management UI 的清爽替代品。
+一个现代化、开源的 RabbitMQ 管理与运维控制台。
 
-> 海心云发行版 · 基于 RabbitScout（MIT）
+> HainMQ Console · 基于 RabbitScout（MIT）
 
-本分支新增了中英双语界面、可配置的部署变量、运维模块以及双语文档。
+海心云 MQ 管理台是 RabbitScout 的分支，新增了中英双语界面、可配置品牌、运维模块、MCP 自动化和模型辅助对话。
+
+RabbitMQ 是其各自权利人的商标。本项目与 RabbitMQ 项目及其商标权利人无隶属、赞助或背书关系。
 
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Next.js](https://img.shields.io/badge/Next.js-16-black)
-![CI](https://github.com/cn-cam/RabbitScout/actions/workflows/ci.yml/badge.svg)
-![Stars](https://img.shields.io/github/stars/cn-cam/RabbitScout)
-
-![Dashboard Dark Mode](docs/assets/dark-dashboard.png)
+![CI](https://github.com/cn-cam/hainmq-console/actions/workflows/ci.yml/badge.svg)
+![Stars](https://img.shields.io/github/stars/cn-cam/hainmq-console)
 
 ---
 
@@ -53,8 +53,8 @@
 ### 安装
 
 ```bash
-git clone https://github.com/cn-cam/RabbitScout.git
-cd RabbitScout
+git clone https://github.com/cn-cam/hainmq-console.git
+cd hainmq-console
 npm install
 ```
 
@@ -117,7 +117,7 @@ docker compose up -d --build
 
 ```bash
 cp .env.example .env
-# 编辑 .env：RABBITMQ_HOST、RABBITSCOUT_IMAGE、RABBITSCOUT_PORT 等
+# 编辑 .env：RABBITMQ_HOST、HAINMQ_IMAGE、HAINMQ_PORT 等
 docker compose up -d --build
 ```
 
@@ -125,21 +125,22 @@ Compose 默认将 `RABBITMQ_HOST` 设为 `host.docker.internal`，可直接连�
 
 ### docker run
 
-本地构建镜像（上游 GHCR 镜像不包含本分支的多语言改动）：
+本地构建镜像（上游 GHCR 镜像不包含本分支的改动）：
 
 ```bash
-docker build -t rabbitscout:zh-cn .
+docker build -t hainmq-console:2.1.1 .
 
-docker run -d --name rabbitscout \
+docker run -d --name hainmq-console \
   -p 3000:3000 \
   -e RABBITMQ_HOST=host.docker.internal \
   -e RABBITMQ_PORT=15672 \
   -e RABBITMQ_PROTOCOL=http \
+  -v hainmq-data:/app/data \
   --restart=always \
-  rabbitscout:zh-cn
+  hainmq-console:2.1.1
 ```
 
-如果本仓库启用了 GitHub Actions，`docker-publish.yml` 会构建并推送多架构镜像到 `ghcr.io/<owner>/rabbitscout`。否则请本地构建或使用 Compose。
+如果本仓库启用了 GitHub Actions，`docker-publish.yml` 会构建并推送多架构镜像到 `ghcr.io/<owner>/hainmq-console`。否则请本地构建或使用 Compose。
 
 镜像以非 root 用户运行，并内置针对 `/api/health` 的容器 `HEALTHCHECK`。
 
@@ -182,7 +183,7 @@ docker run -d --name rabbitscout \
 | 变量 | 默认值 | 说明 |
 |---|---|---|
 | `APP_NAME` | `海心云` | 登录页和侧边栏显示的产品名称 |
-| `APP_PRODUCT_NAME` | `RabbitMQ 管理台` | 产品副标题 |
+| `APP_PRODUCT_NAME` | `MQ 管理台` | 产品副标题 |
 | `APP_COPYRIGHT` | `© 2026 海心云` | 登录页和仪表盘页脚显示的版权信息 |
 | `APP_LICENSE` | `MIT` | 页脚显示的开源协议 |
 | `APP_LICENSE_URL` | 本仓库 `LICENSE` | 协议链接 |
@@ -196,8 +197,9 @@ docker run -d --name rabbitscout \
 
 | 变量 | 默认值 | 说明 |
 |---|---|---|
-| `RABBITSCOUT_IMAGE` | `rabbitscout:zh-cn` | Compose 使用或构建的镜像名称和标签 |
-| `RABBITSCOUT_PORT` | `3000` | Web 界面对外发布的宿主机端口 |
+| `HAINMQ_IMAGE` | `hainmq-console:2.1.1` | Compose 使用或构建的镜像名称和标签 |
+| `HAINMQ_PORT` | `3000` | Web 界面对外发布的宿主机端口 |
+| `HAINMQ_CONTAINER_NAME` | `hainmq-console` | Compose 使用的容器名称 |
 
 ---
 
@@ -213,7 +215,7 @@ docker run -d --name rabbitscout \
 - 英文（默认）
 - 简体中文（`zh-CN`）
 
-在登录页或仪表盘右上角点击地球图标切换语言。选择结果保存在 `rabbitscout-locale` cookie 中；未选择时使用英文。如果希望跟随浏览器语言，可在 `lib/i18n/server.ts` 中恢复 `Accept-Language` 检测。
+在登录页或仪表盘右上角点击地球图标切换语言。选择结果保存在 `hainmq-locale` cookie 中；未选择时使用英文。如果希望跟随浏览器语言，可在 `lib/i18n/server.ts` 中恢复 `Accept-Language` 检测。
 
 ### 新增界面语言
 
@@ -227,17 +229,6 @@ docker run -d --name rabbitscout \
 ---
 
 ## 截图
-
-### 深色模式
-![Dashboard Dark Mode](docs/assets/dark-dashboard.png)
-
-### 浅色模式
-![Dashboard Light Mode](docs/assets/light-dashboard.png)
-
-### 登录页
-![Login](docs/assets/login.png)
-
-### 运维模块
 
 | English | 简体中文 |
 |---|---|
@@ -320,7 +311,7 @@ scripts/
 
 ## 认证原理
 
-RabbitScout 使用**透传认证**。用户登录时，凭据会直接发送到 RabbitMQ Management API（`/api/whoami`）校验。校验成功后，凭据保存在 httpOnly cookie 中，并在后续每次 API 请求时转发。
+海心云 MQ 管理台使用**透传认证**。用户登录时，凭据会直接发送到 RabbitMQ Management API（`/api/whoami`）校验。校验成功后，凭据保存在 httpOnly cookie 中，并在后续每次 API 请求时转发。
 
 - 不在环境变量或磁盘中保存密码
 - 每个用户使用自己的 RabbitMQ 账号认证
@@ -335,7 +326,7 @@ RabbitScout 使用**透传认证**。用户登录时，凭据会直接发送到 
 ## 兼容性
 
 - RabbitMQ 3.x 和 4.x，且必须启用 `rabbitmq_management` 插件。
-- RabbitScout 通过 RabbitMQ Management HTTP API（默认端口 `15672`）工作，只有 AMQP 端口（`5672`）不够。
+- 海心云 MQ 管理台通过 RabbitMQ Management HTTP API（默认端口 `15672`）工作，只有 AMQP 端口（`5672`）不够。
 - 不开放 `15672` 端口或不允许修改插件/配置的托管服务无法使用。
 
 ---
@@ -385,8 +376,10 @@ npm run e2e           # 基于内置模拟 Broker 的端到端测试
 
 MIT — 参见 [LICENSE](LICENSE)。
 
-本分支保留原 RabbitScout 的版权声明（`Copyright (c) 2024 Ralve`），并增加修改部分的版权声明（`Copyright (c) 2026 海心云`），详见 [NOTICE](NOTICE) 和 [COPYRIGHT](COPYRIGHT)。MIT 许可证要求在所有副本或实质性部分中保留原始版权和许可声明。`RabbitScout` 仅用于标注上游项目，本分支不主张上游项目的商标或品牌所有权。
+海心云 MQ 管理台 / HainMQ Console 是 RabbitScout 的分支。本发行版保留原 RabbitScout 的版权声明（`Copyright (c) 2024 Ralve`），并增加修改部分的版权声明（`Copyright (c) 2026 海心云`），详见 [NOTICE](NOTICE) 和 [COPYRIGHT](COPYRIGHT)。MIT 许可证要求在所有副本或实质性部分中保留原始版权和许可声明。`RabbitScout` 仅用于标注上游项目，本发行版不主张上游项目的商标或品牌所有权。
 
 界面版权信息可通过 `APP_COPYRIGHT` 配置，与源码许可证相互独立。
 
 Docker 镜像中包含 `LICENSE`、`NOTICE` 和 `COPYRIGHT`，再分发时请勿移除。MIT 许可证不授予商标权；上游名称和品牌素材仅用于署名，生产发行时请通过 `APP_LOGO_URL` 配置你自己的 Logo。
+
+RabbitMQ 是其各自权利人的商标。本项目与 RabbitMQ 项目及其商标权利人无隶属、赞助或背书关系。

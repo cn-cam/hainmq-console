@@ -1,11 +1,11 @@
-# RabbitScout 运维模块需求说明（已确认）
+# 海心云 MQ 管理台运维模块需求说明（已确认）
 
 > 状态：需求已确认，开发中。
 > 约束：只对接 RabbitMQ；不引入 PostgreSQL；不引入独立 Worker；不新增常驻服务；保持现有单容器/单进程架构。
 
 ## 1. 目标
 
-在现有 RabbitScout 上新增运维模块：
+在现有海心云 MQ 管理台上新增运维模块：
 
 1. 监控 RabbitMQ 服务状态、队列异常、消息异常、连接/通道异常。
 2. 邮件 + Webhook 告警，支持配置多个通道，后台可管理。
@@ -33,7 +33,7 @@
 - 优先使用 Node 24 内置 `node:sqlite`（无原生编译依赖）。
 - 如果后续对稳定性有更高要求，可切换 `better-sqlite3`，仍然是嵌入式，不新增容器。
 - 开启 WAL、busy timeout；定期清理过期指标和通知记录。
-- Docker Compose 增加命名卷 `rabbitscout-data:/app/data`，并为运行用户授予写权限。
+- Docker Compose 增加命名卷 `hainmq-data:/app/data`，并为运行用户授予写权限。
 
 ### 2.2 后台任务方案
 
@@ -46,7 +46,7 @@
 
 ### 2.3 对现有功能的影响
 
-- 现有 RabbitScout 页面保持不变。
+- 现有管理页面保持不变。
 - 新增 `/ops` 路由和 API。
 - 新增 SQLite 文件和数据卷，不新增容器。
 - 现有 Docker 镜像仍为单进程，启动入口不变。
@@ -74,7 +74,7 @@
 
 后台监控不能依赖某个用户在线，因此需要一个**只读 RabbitMQ 服务账号**：
 
-- 在 RabbitMQ 中创建 `rabbitscout-monitor` 用户，授予 `monitoring` tag，并只读权限。
+- 在 RabbitMQ 中创建 `hainmq-monitor` 用户，授予 `monitoring` tag，并只读权限。
 - 凭据通过本地 `.env` 或加密后的 SQLite 配置保存。
 - 该账号只用于采集，不用于写操作。
 - 如果 RabbitMQ 权限模型要求，至少需要能访问目标 Vhost 的 `configure`/`read` 权限；建议只授予需要监控的 Vhost。
@@ -186,7 +186,7 @@
 
 - 多个 Webhook 通道。
 - 字段：URL、Method、Headers、Body 模板、超时、重试次数、签名密钥、启用状态。
-- HMAC 签名，例如 `X-RabbitScout-Signature`。
+- HMAC 签名，例如 `X-HainMQ-Signature`。
 - 通用 JSON + 钉钉/企业微信/飞书/Slack 预设模板。
 - SSRF 防护：
   - 仅允许 http/https。
@@ -209,7 +209,7 @@
 
 - 优先支持本地 opencode 通过 **stdio** 接入。
 - MCP Server 作为本地子进程运行，不监听公网端口。
-- 通过 Bearer Token 调用本机 RabbitScout `/api/ops/mcp/*`。
+- 通过 Bearer Token 调用本机海心云 MQ 管理台 `/api/ops/mcp/*`。
 - 后续如需远程 MCP，只允许 HTTPS + Token + 来源限制。
 
 ### 6.2 只读工具
@@ -304,11 +304,11 @@
 
 ### 10.1 Docker Compose
 
-在现有 `rabbitscout` 服务中增加：
+在现有 `hainmq-console` 服务中增加：
 
 ```yaml
 volumes:
-  - rabbitscout-data:/app/data
+  - hainmq-data:/app/data
 environment:
   - OPS_DB_PATH=/app/data/ops.db
   - OPS_ENCRYPTION_KEY=${OPS_ENCRYPTION_KEY}
@@ -320,7 +320,7 @@ environment:
   - OPS_ADMIN_USERS=${OPS_ADMIN_USERS:-}
   - OPS_WEBHOOK_ALLOW_PRIVATE=${OPS_WEBHOOK_ALLOW_PRIVATE:-false}
 volumes:
-  rabbitscout-data:
+  hainmq-data:
 ```
 
 不新增服务，不新增容器。

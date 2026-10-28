@@ -13,7 +13,7 @@ RUN npm run build
 # ── Production stage ─────────────────────────────────────────
 FROM node:24-alpine AS runner
 
-LABEL org.opencontainers.image.source="https://github.com/cn-cam/RabbitScout" \
+LABEL org.opencontainers.image.source="https://github.com/cn-cam/hainmq-console" \
       org.opencontainers.image.description="Modern RabbitMQ management dashboard" \
       org.opencontainers.image.licenses="MIT"
 

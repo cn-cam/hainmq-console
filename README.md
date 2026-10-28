@@ -1,19 +1,19 @@
-# RabbitScout
+# HainMQ Console
 
 English | [简体中文](README.zh-CN.md)
 
-A modern, open-source dashboard for RabbitMQ management. Built as a clean alternative to the default RabbitMQ Management UI.
+A modern, open-source management and operations console for RabbitMQ.
 
-> 海心云 distribution · Based on RabbitScout (MIT)
+> 海心云 MQ 管理台 · Based on RabbitScout (MIT)
 
-This fork adds a bilingual UI (English / Simplified Chinese), configurable deployment variables, an operations module, and documentation for both languages.
+HainMQ Console is a fork of RabbitScout with a bilingual UI, configurable branding, an operations module, MCP automation, and model-assisted chat.
+
+RabbitMQ is a trademark of its respective owner. This project is not affiliated with, sponsored by, or endorsed by the RabbitMQ project or its trademark owners.
 
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Next.js](https://img.shields.io/badge/Next.js-16-black)
-![CI](https://github.com/cn-cam/RabbitScout/actions/workflows/ci.yml/badge.svg)
-![Stars](https://img.shields.io/github/stars/cn-cam/RabbitScout)
-
-![Dashboard Dark Mode](docs/assets/dark-dashboard.png)
+![CI](https://github.com/cn-cam/hainmq-console/actions/workflows/ci.yml/badge.svg)
+![Stars](https://img.shields.io/github/stars/cn-cam/hainmq-console)
 
 ---
 
@@ -53,8 +53,8 @@ This fork adds a bilingual UI (English / Simplified Chinese), configurable deplo
 ### Install
 
 ```bash
-git clone https://github.com/cn-cam/RabbitScout.git
-cd RabbitScout
+git clone https://github.com/cn-cam/hainmq-console.git
+cd hainmq-console
 npm install
 ```
 
@@ -117,7 +117,7 @@ Open `/ops` with a RabbitMQ user that has the `administrator`, `policymaker`, `m
 
 ```bash
 cp .env.example .env
-# edit .env: RABBITMQ_HOST, RABBITSCOUT_IMAGE, RABBITSCOUT_PORT, ...
+# edit .env: RABBITMQ_HOST, HAINMQ_IMAGE, HAINMQ_PORT, ...
 docker compose up -d --build
 ```
 
@@ -125,21 +125,22 @@ The Compose file defaults to `host.docker.internal` for `RABBITMQ_HOST`, so it w
 
 ### docker run
 
-Build the image locally (the upstream GHCR image does not include this fork's localization changes):
+Build the image locally (the upstream GHCR image does not include this fork's changes):
 
 ```bash
-docker build -t rabbitscout:zh-cn .
+docker build -t hainmq-console:2.1.1 .
 
-docker run -d --name rabbitscout \
+docker run -d --name hainmq-console \
   -p 3000:3000 \
   -e RABBITMQ_HOST=host.docker.internal \
   -e RABBITMQ_PORT=15672 \
   -e RABBITMQ_PROTOCOL=http \
+  -v hainmq-data:/app/data \
   --restart=always \
-  rabbitscout:zh-cn
+  hainmq-console:2.1.1
 ```
 
-If this fork has GitHub Actions enabled, `docker-publish.yml` publishes a multi-arch image to `ghcr.io/<owner>/rabbitscout`. Otherwise build locally or use Compose.
+If GitHub Actions is enabled for this repository, `docker-publish.yml` publishes a multi-arch image to `ghcr.io/<owner>/hainmq-console`. Otherwise build locally or use Compose.
 
 The image runs as a non-root user and includes a container `HEALTHCHECK` against `/api/health`.
 
@@ -182,7 +183,7 @@ These are public runtime variables. Restart the container after changing them; n
 | Variable | Default | Description |
 |---|---|---|
 | `APP_NAME` | `海心云` | Product name shown on the login page and sidebar |
-| `APP_PRODUCT_NAME` | `RabbitMQ 管理台` | Product subtitle |
+| `APP_PRODUCT_NAME` | `MQ 管理台` | Product subtitle |
 | `APP_COPYRIGHT` | `© 2026 海心云` | Copyright line shown in the login and dashboard footer |
 | `APP_LICENSE` | `MIT` | License label shown in the footer |
 | `APP_LICENSE_URL` | this repository's `LICENSE` | License link |
@@ -196,8 +197,9 @@ These are read by Docker Compose from `.env`; they are not runtime variables of 
 
 | Variable | Default | Description |
 |---|---|---|
-| `RABBITSCOUT_IMAGE` | `rabbitscout:zh-cn` | Image name and tag used or built by Compose |
-| `RABBITSCOUT_PORT` | `3000` | Host port published for the web UI |
+| `HAINMQ_IMAGE` | `hainmq-console:2.1.1` | Image name and tag used or built by Compose |
+| `HAINMQ_PORT` | `3000` | Host port published for the web UI |
+| `HAINMQ_CONTAINER_NAME` | `hainmq-console` | Container name used by Compose |
 
 ---
 
@@ -213,7 +215,7 @@ These are read by Docker Compose from `.env`; they are not runtime variables of 
 - English (default)
 - Simplified Chinese (`zh-CN`)
 
-Use the globe icon on the login page or dashboard header to switch languages. The choice is stored in the `rabbitscout-locale` cookie. English is used when no choice has been made. To follow the browser language instead, restore `Accept-Language` detection in `lib/i18n/server.ts`.
+Use the globe icon on the login page or dashboard header to switch languages. The choice is stored in the `hainmq-locale` cookie. English is used when no choice has been made. To follow the browser language instead, restore `Accept-Language` detection in `lib/i18n/server.ts`.
 
 ### Add another UI language
 
@@ -227,17 +229,6 @@ Message keys are typed, so `npm run typecheck` fails if a translation is missing
 ---
 
 ## Screenshots
-
-### Dark Mode
-![Dashboard Dark Mode](docs/assets/dark-dashboard.png)
-
-### Light Mode
-![Dashboard Light Mode](docs/assets/light-dashboard.png)
-
-### Login
-![Login](docs/assets/login.png)
-
-### Operations Module
 
 | English | 简体中文 |
 |---|---|
@@ -320,7 +311,7 @@ scripts/
 
 ## How Auth Works
 
-RabbitScout uses **pass-through authentication**. When a user logs in, their credentials are validated directly against the RabbitMQ Management API (`/api/whoami`). On success, the credentials are stored in an httpOnly cookie and forwarded with every subsequent API request.
+HainMQ Console uses **pass-through authentication**. When a user logs in, their credentials are validated directly against the RabbitMQ Management API (`/api/whoami`). On success, the credentials are stored in an httpOnly cookie and forwarded with every subsequent API request.
 
 - No passwords are stored in environment variables or on disk
 - Each user authenticates with their own RabbitMQ account
@@ -335,7 +326,7 @@ This means RabbitMQ's built-in permission system (management, monitoring, policy
 ## Compatibility
 
 - RabbitMQ 3.x and 4.x with the `rabbitmq_management` plugin enabled.
-- RabbitScout talks to the RabbitMQ Management HTTP API (default port `15672`). The AMQP port (`5672`) alone is not enough.
+- HainMQ Console talks to the RabbitMQ Management HTTP API (default port `15672`). The AMQP port (`5672`) alone is not enough.
 - Managed services that do not expose port `15672` or do not allow plugin/configuration changes cannot be used.
 
 ---
@@ -385,8 +376,10 @@ The e2e suite covers the full auth surface (both broker tag formats, Secure-cook
 
 MIT — see [LICENSE](LICENSE).
 
-This fork retains the original RabbitScout copyright notice (`Copyright (c) 2024 Ralve`) and adds modifications copyright (`Copyright (c) 2026 海心云`); see [NOTICE](NOTICE) and [COPYRIGHT](COPYRIGHT). The original MIT permission notice must remain in copies and substantial portions of the software. "RabbitScout" is used only to attribute the upstream project; this fork does not claim the upstream project's trademarks or branding.
+HainMQ Console / 海心云 MQ 管理台 is a fork of RabbitScout. This distribution retains the original RabbitScout copyright notice (`Copyright (c) 2024 Ralve`) and adds modifications copyright (`Copyright (c) 2026 海心云`); see [NOTICE](NOTICE) and [COPYRIGHT](COPYRIGHT). The original MIT permission notice must remain in copies and substantial portions of the software. "RabbitScout" is used only to attribute the upstream project; this distribution does not claim the upstream project's trademarks or branding.
 
 The UI copyright line is configurable via `APP_COPYRIGHT` and is separate from the source-code license.
 
 The Docker image includes `LICENSE`, `NOTICE`, and `COPYRIGHT`; do not remove them when redistributing. The MIT license does not grant trademark rights. Upstream names and brand assets are used only for attribution; set `APP_LOGO_URL` to your own logo for a production distribution.
+
+RabbitMQ is a trademark of its respective owner. This project is not affiliated with, sponsored by, or endorsed by the RabbitMQ project or its trademark owners.

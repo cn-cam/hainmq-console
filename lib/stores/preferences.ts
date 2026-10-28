@@ -35,7 +35,7 @@ export const usePreferences = create<PreferencesState>()(
       vhost: null,
       setVhost: (vhost) => set({ vhost }),
     }),
-    { name: 'rabbitscout-preferences' },
+    { name: 'hainmq-preferences' },
   ),
 )
 
