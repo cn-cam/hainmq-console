@@ -376,7 +376,14 @@ npm run e2e           # 基于内置模拟 Broker 的端到端测试
 ## CI/CD
 
 - **`ci.yml`** — 在每次 Pull Request 和推送到 `main` 时执行 lint、typecheck、build 和 e2e
-- **`docker-publish.yml`** — 在仓库启用 Actions 后，推送 `main` 和 `v*` 标签时构建并推送多架构（amd64/arm64）镜像到 GHCR 和 Docker Hub。Docker Hub 发布需要仓库 Secrets：`DOCKERHUB_USERNAME`、`DOCKERHUB_TOKEN`
+- **`docker-publish.yml`** — 仅在推送 `v*` 标签或手动执行时构建并推送多架构（amd64/arm64）镜像到 GHCR 和 Docker Hub，不会在每次提交时运行。Docker Hub 发布需要仓库 Secrets：`DOCKERHUB_USERNAME`、`DOCKERHUB_TOKEN`
+
+发布版本时，先添加两个 Docker Hub Secrets，然后推送版本标签，或在 Actions 页面手动运行 **Build & Push Docker Image**：
+
+```bash
+git tag v2.1.2
+git push origin v2.1.2
+```
 - **Dependabot** — 每周分组更新 npm、GitHub Actions 和 Docker 基础镜像
 
 ---

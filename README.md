@@ -376,7 +376,14 @@ The e2e suite covers the full auth surface (both broker tag formats, Secure-cook
 ## CI/CD
 
 - **`ci.yml`** — lint, typecheck, build, and e2e on every pull request and push to `main`
-- **`docker-publish.yml`** — builds and pushes a multi-arch (amd64/arm64) image to GHCR and Docker Hub on pushes to `main` and `v*` tags. Docker Hub publishing requires `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` repository secrets.
+- **`docker-publish.yml`** — builds and pushes a multi-arch (amd64/arm64) image to GHCR and Docker Hub only on `v*` tags or manual dispatch. It does not run on every commit. Docker Hub publishing requires `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` repository secrets.
+
+To publish a release, add the two Docker Hub secrets, then push a version tag or run **Build & Push Docker Image** manually from the Actions tab:
+
+```bash
+git tag v2.1.2
+git push origin v2.1.2
+```
 - **Dependabot** — weekly grouped updates for npm, GitHub Actions, and the Docker base image
 
 ---
