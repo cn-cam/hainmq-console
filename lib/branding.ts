@@ -27,7 +27,7 @@ export function getBranding(): Branding {
       "https://github.com/Ralve-org/RabbitScout",
     logoUrl:
       process.env.APP_LOGO_URL === undefined
-        ? "/images/logo.png"
+        ? ""
         : process.env.APP_LOGO_URL.trim(),
   }
 }

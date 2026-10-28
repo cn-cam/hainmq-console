@@ -188,7 +188,7 @@ These are public runtime variables. Restart the container after changing them; n
 | `APP_LICENSE_URL` | this repository's `LICENSE` | License link |
 | `APP_ATTRIBUTION` | `Based on RabbitScout (MIT)` | Upstream attribution text |
 | `APP_ATTRIBUTION_URL` | `https://github.com/Ralve-org/RabbitScout` | Upstream attribution link |
-| `APP_LOGO_URL` | `/images/logo.png` | Logo URL; set to an empty value to use the initial-letter mark |
+| `APP_LOGO_URL` | empty | Your own logo URL; empty uses the initial-letter mark instead of upstream brand assets |
 
 ### Docker Compose variables
 
@@ -244,7 +244,7 @@ Message keys are typed, so `npm run typecheck` fails if a translation is missing
 | ![Operations dark](docs/assets/ops-en-dark.png) | ![运维深色](docs/assets/ops-zh-dark.png) |
 | ![Operations light](docs/assets/ops-en-light.png) | ![运维浅色](docs/assets/ops-zh-light.png) |
 
-The screenshots show the Rules page. The module also includes Overview, Alerts, Channels, Targets, Approvals, Chat, Models, and Settings.
+The screenshots show the Rules page. The module also includes Overview, Alerts, Channels, Targets, Approvals, Chat, Models, and Settings. They were captured before replacing the upstream logo; production uses your `APP_LOGO_URL` or the initial-letter mark.
 
 ---
 
@@ -388,3 +388,5 @@ MIT — see [LICENSE](LICENSE).
 This fork retains the original RabbitScout copyright notice (`Copyright (c) 2024 Ralve`) and adds modifications copyright (`Copyright (c) 2026 海心云`); see [NOTICE](NOTICE) and [COPYRIGHT](COPYRIGHT). The original MIT permission notice must remain in copies and substantial portions of the software. "RabbitScout" is used only to attribute the upstream project; this fork does not claim the upstream project's trademarks or branding.
 
 The UI copyright line is configurable via `APP_COPYRIGHT` and is separate from the source-code license.
+
+The Docker image includes `LICENSE`, `NOTICE`, and `COPYRIGHT`; do not remove them when redistributing. The MIT license does not grant trademark rights. Upstream names and brand assets are used only for attribution; set `APP_LOGO_URL` to your own logo for a production distribution.

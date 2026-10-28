@@ -12,7 +12,7 @@ services:
       - APP_LICENSE_URL=${APP_LICENSE_URL:-https://github.com/cn-cam/RabbitScout/blob/main/LICENSE}
       - APP_ATTRIBUTION=${APP_ATTRIBUTION:-Based on RabbitScout (MIT)}
       - APP_ATTRIBUTION_URL=${APP_ATTRIBUTION_URL:-https://github.com/Ralve-org/RabbitScout}
-      - APP_LOGO_URL=${APP_LOGO_URL:-/images/logo.png}
+      - APP_LOGO_URL=${APP_LOGO_URL:-}
       - RABBITMQ_HOST=${RABBITMQ_HOST:-host.docker.internal}
       - RABBITMQ_PORT=${RABBITMQ_PORT:-15672}
       - RABBITMQ_PROTOCOL=${RABBITMQ_PROTOCOL:-http}

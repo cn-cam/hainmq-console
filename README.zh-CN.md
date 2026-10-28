@@ -188,7 +188,7 @@ docker run -d --name rabbitscout \
 | `APP_LICENSE_URL` | 本仓库 `LICENSE` | 协议链接 |
 | `APP_ATTRIBUTION` | `Based on RabbitScout (MIT)` | 上游项目署名 |
 | `APP_ATTRIBUTION_URL` | `https://github.com/Ralve-org/RabbitScout` | 上游项目链接 |
-| `APP_LOGO_URL` | `/images/logo.png` | Logo 地址；留空则显示名称首字标记 |
+| `APP_LOGO_URL` | 空 | 你自己的 Logo 地址；留空则显示名称首字标记，避免使用上游品牌素材 |
 
 ### Docker Compose 变量
 
@@ -244,7 +244,7 @@ docker run -d --name rabbitscout \
 | ![Operations dark](docs/assets/ops-en-dark.png) | ![运维深色](docs/assets/ops-zh-dark.png) |
 | ![Operations light](docs/assets/ops-en-light.png) | ![运维浅色](docs/assets/ops-zh-light.png) |
 
-截图展示的是规则页；运维模块还包含概览、告警、通知通道、监控目标、审批、对话、模型和设置。
+截图展示的是规则页；运维模块还包含概览、告警、通知通道、监控目标、审批、对话、模型和设置。截图拍摄于替换上游 Logo 之前；生产环境使用你配置的 `APP_LOGO_URL` 或名称首字标记。
 
 ---
 
@@ -388,3 +388,5 @@ MIT — 参见 [LICENSE](LICENSE)。
 本分支保留原 RabbitScout 的版权声明（`Copyright (c) 2024 Ralve`），并增加修改部分的版权声明（`Copyright (c) 2026 海心云`），详见 [NOTICE](NOTICE) 和 [COPYRIGHT](COPYRIGHT)。MIT 许可证要求在所有副本或实质性部分中保留原始版权和许可声明。`RabbitScout` 仅用于标注上游项目，本分支不主张上游项目的商标或品牌所有权。
 
 界面版权信息可通过 `APP_COPYRIGHT` 配置，与源码许可证相互独立。
+
+Docker 镜像中包含 `LICENSE`、`NOTICE` 和 `COPYRIGHT`，再分发时请勿移除。MIT 许可证不授予商标权；上游名称和品牌素材仅用于署名，生产发行时请通过 `APP_LOGO_URL` 配置你自己的 Logo。
