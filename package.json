@@ -1,6 +1,6 @@
 {
-  "name": "rabbitscout",
-  "version": "2.1.0",
+  "name": "hainmq-console",
+  "version": "2.1.1",
   "private": true,
   "engines": {
     "node": ">=20.9.0"
