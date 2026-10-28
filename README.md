@@ -113,6 +113,25 @@ Open `/ops` with a RabbitMQ user that has the `administrator`, `policymaker`, `m
 
 ## Docker
 
+### Prebuilt image (Docker Hub)
+
+Multi-arch image for `linux/amd64` and `linux/arm64`:
+
+```bash
+docker pull cocam/hainmq-console:2.1.1
+
+docker run -d --name hainmq-console \
+  -p 3000:3000 \
+  -e RABBITMQ_HOST=host.docker.internal \
+  -e RABBITMQ_PORT=15672 \
+  -e RABBITMQ_PROTOCOL=http \
+  -v hainmq-data:/app/data \
+  --restart=always \
+  cocam/hainmq-console:2.1.1
+```
+
+Available tags: `2.1.1`, `2.1`, `2`, `latest`.
+
 ### Docker Compose (recommended)
 
 ```bash
@@ -140,7 +159,7 @@ docker run -d --name hainmq-console \
   hainmq-console:2.1.1
 ```
 
-If GitHub Actions is enabled for this repository, `docker-publish.yml` publishes a multi-arch image to `ghcr.io/<owner>/hainmq-console`. Otherwise build locally or use Compose.
+If GitHub Actions is enabled for this repository, `docker-publish.yml` publishes a multi-arch image to both `ghcr.io/<owner>/hainmq-console` and Docker Hub. Otherwise build locally or use Compose.
 
 The image runs as a non-root user and includes a container `HEALTHCHECK` against `/api/health`.
 
@@ -357,7 +376,7 @@ The e2e suite covers the full auth surface (both broker tag formats, Secure-cook
 ## CI/CD
 
 - **`ci.yml`** — lint, typecheck, build, and e2e on every pull request and push to `main`
-- **`docker-publish.yml`** — builds and pushes a multi-arch (amd64/arm64) image to GHCR on pushes to `main` and version tags, when Actions are enabled for the repository
+- **`docker-publish.yml`** — builds and pushes a multi-arch (amd64/arm64) image to GHCR and Docker Hub on pushes to `main` and `v*` tags. Docker Hub publishing requires `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` repository secrets.
 - **Dependabot** — weekly grouped updates for npm, GitHub Actions, and the Docker base image
 
 ---

@@ -113,6 +113,25 @@ docker compose up -d --build
 
 ## Docker
 
+### 预构建镜像（Docker Hub）
+
+支持 `linux/amd64` 和 `linux/arm64` 多架构：
+
+```bash
+docker pull cocam/hainmq-console:2.1.1
+
+docker run -d --name hainmq-console \
+  -p 3000:3000 \
+  -e RABBITMQ_HOST=host.docker.internal \
+  -e RABBITMQ_PORT=15672 \
+  -e RABBITMQ_PROTOCOL=http \
+  -v hainmq-data:/app/data \
+  --restart=always \
+  cocam/hainmq-console:2.1.1
+```
+
+可用标签：`2.1.1`、`2.1`、`2`、`latest`。
+
 ### Docker Compose（推荐）
 
 ```bash
@@ -140,7 +159,7 @@ docker run -d --name hainmq-console \
   hainmq-console:2.1.1
 ```
 
-如果本仓库启用了 GitHub Actions，`docker-publish.yml` 会构建并推送多架构镜像到 `ghcr.io/<owner>/hainmq-console`。否则请本地构建或使用 Compose。
+如果本仓库启用了 GitHub Actions，`docker-publish.yml` 会构建并推送多架构镜像到 GHCR 和 Docker Hub。否则请本地构建或使用 Compose。
 
 镜像以非 root 用户运行，并内置针对 `/api/health` 的容器 `HEALTHCHECK`。
 
@@ -357,7 +376,7 @@ npm run e2e           # 基于内置模拟 Broker 的端到端测试
 ## CI/CD
 
 - **`ci.yml`** — 在每次 Pull Request 和推送到 `main` 时执行 lint、typecheck、build 和 e2e
-- **`docker-publish.yml`** — 在仓库启用 Actions 后，推送 `main` 和版本标签时构建并推送多架构（amd64/arm64）镜像到 GHCR
+- **`docker-publish.yml`** — 在仓库启用 Actions 后，推送 `main` 和 `v*` 标签时构建并推送多架构（amd64/arm64）镜像到 GHCR 和 Docker Hub。Docker Hub 发布需要仓库 Secrets：`DOCKERHUB_USERNAME`、`DOCKERHUB_TOKEN`
 - **Dependabot** — 每周分组更新 npm、GitHub Actions 和 Docker 基础镜像
 
 ---
