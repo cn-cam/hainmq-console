@@ -1,0 +1,302 @@
+[
+  {
+    "name": "mq_list_targets",
+    "description": "List configured RabbitMQ monitoring targets.",
+    "write": false,
+    "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false }
+  },
+  {
+    "name": "mq_get_overview",
+    "description": "Get live broker overview for a target (version, node, object totals, message rates).",
+    "write": false,
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "target_id": { "type": "number", "description": "Target id; defaults to the first enabled target." }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "mq_list_queues",
+    "description": "List queues with message counts, consumers, state, and rates.",
+    "write": false,
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "target_id": { "type": "number" },
+        "vhost": { "type": "string", "description": "Optional vhost filter." },
+        "name": { "type": "string", "description": "Optional queue name substring filter." }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "mq_get_queue",
+    "description": "Get details for one queue.",
+    "write": false,
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "target_id": { "type": "number" },
+        "vhost": { "type": "string" },
+        "name": { "type": "string" }
+      },
+      "required": ["vhost", "name"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "mq_list_exchanges",
+    "description": "List exchanges with rates.",
+    "write": false,
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "target_id": { "type": "number" },
+        "vhost": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "mq_list_bindings",
+    "description": "List bindings for a vhost, optionally filtered by source exchange.",
+    "write": false,
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "target_id": { "type": "number" },
+        "vhost": { "type": "string" },
+        "exchange": { "type": "string" }
+      },
+      "required": ["vhost"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "mq_list_connections",
+    "description": "List active connections.",
+    "write": false,
+    "inputSchema": {
+      "type": "object",
+      "properties": { "target_id": { "type": "number" } },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "mq_list_channels",
+    "description": "List active channels.",
+    "write": false,
+    "inputSchema": {
+      "type": "object",
+      "properties": { "target_id": { "type": "number" } },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "mq_list_alerts",
+    "description": "List recent alerts from the operations database.",
+    "write": false,
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "status": { "type": "string", "enum": ["pending", "firing", "resolved"] },
+        "limit": { "type": "number", "default": 50 }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "mq_get_alert",
+    "description": "Get one alert by id, including notification records.",
+    "write": false,
+    "inputSchema": {
+      "type": "object",
+      "properties": { "alert_id": { "type": "number" } },
+      "required": ["alert_id"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "mq_query_metrics",
+    "description": "Query stored metric samples for a target.",
+    "write": false,
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "target_id": { "type": "number" },
+        "metric": { "type": "string" },
+        "object_type": { "type": "string", "enum": ["global", "queue", "exchange"] },
+        "object_name": { "type": "string" },
+        "since_minutes": { "type": "number", "default": 60 },
+        "limit": { "type": "number", "default": 500 }
+      },
+      "required": ["metric"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "mq_peek_messages",
+    "description": "Non-destructively peek at up to 10 messages from a queue.",
+    "write": false,
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "target_id": { "type": "number" },
+        "vhost": { "type": "string" },
+        "queue": { "type": "string" },
+        "count": { "type": "number", "default": 10 }
+      },
+      "required": ["vhost", "queue"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "mq_get_node_health",
+    "description": "Get node health metrics such as memory, disk, file descriptors, and sockets.",
+    "write": false,
+    "inputSchema": {
+      "type": "object",
+      "properties": { "target_id": { "type": "number" } },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "mq_search_audit_logs",
+    "description": "Search the operations audit log.",
+    "write": false,
+    "inputSchema": {
+      "type": "object",
+      "properties": { "limit": { "type": "number", "default": 100 } },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "mq_get_approval",
+    "description": "Check the status of a pending write approval.",
+    "write": false,
+    "inputSchema": {
+      "type": "object",
+      "properties": { "approval_id": { "type": "string" } },
+      "required": ["approval_id"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "mq_create_queue",
+    "description": "Request creation of a queue. Requires human approval.",
+    "write": true,
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "target_id": { "type": "number" },
+        "vhost": { "type": "string" },
+        "name": { "type": "string" },
+        "durable": { "type": "boolean", "default": true },
+        "auto_delete": { "type": "boolean", "default": false },
+        "arguments": { "type": "object", "default": {} }
+      },
+      "required": ["vhost", "name"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "mq_delete_queue",
+    "description": "Request deletion of a queue. Requires human approval.",
+    "write": true,
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "target_id": { "type": "number" },
+        "vhost": { "type": "string" },
+        "name": { "type": "string" }
+      },
+      "required": ["vhost", "name"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "mq_purge_queue",
+    "description": "Request purging all ready messages from a queue. Requires human approval.",
+    "write": true,
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "target_id": { "type": "number" },
+        "vhost": { "type": "string" },
+        "name": { "type": "string" }
+      },
+      "required": ["vhost", "name"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "mq_publish_message",
+    "description": "Request publishing a message. Requires human approval.",
+    "write": true,
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "target_id": { "type": "number" },
+        "vhost": { "type": "string" },
+        "exchange": { "type": "string", "default": "" },
+        "routing_key": { "type": "string" },
+        "payload": { "type": "string" },
+        "payload_encoding": { "type": "string", "enum": ["string", "base64"], "default": "string" },
+        "properties": { "type": "object", "default": {} }
+      },
+      "required": ["vhost", "routing_key", "payload"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "mq_create_binding",
+    "description": "Request creating a binding from an exchange to a queue. Requires human approval.",
+    "write": true,
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "target_id": { "type": "number" },
+        "vhost": { "type": "string" },
+        "exchange": { "type": "string" },
+        "queue": { "type": "string" },
+        "routing_key": { "type": "string", "default": "" },
+        "arguments": { "type": "object", "default": {} }
+      },
+      "required": ["vhost", "exchange", "queue"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "mq_delete_binding",
+    "description": "Request deleting a binding. Requires human approval.",
+    "write": true,
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "target_id": { "type": "number" },
+        "vhost": { "type": "string" },
+        "exchange": { "type": "string" },
+        "queue": { "type": "string" },
+        "properties_key": { "type": "string" }
+      },
+      "required": ["vhost", "exchange", "queue", "properties_key"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "mq_close_connection",
+    "description": "Request closing a connection. Requires human approval.",
+    "write": true,
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "target_id": { "type": "number" },
+        "name": { "type": "string" }
+      },
+      "required": ["name"],
+      "additionalProperties": false
+    }
+  }
+]

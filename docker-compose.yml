@@ -1,0 +1,50 @@
+services:
+  rabbitscout:
+    image: ${RABBITSCOUT_IMAGE:-rabbitscout:zh-cn}
+    build: .
+    ports:
+      - "${RABBITSCOUT_PORT:-3000}:3000"
+    environment:
+      - APP_NAME=${APP_NAME:-海心云}
+      - APP_PRODUCT_NAME=${APP_PRODUCT_NAME:-RabbitMQ 管理台}
+      - APP_COPYRIGHT=${APP_COPYRIGHT:-© 2026 海心云}
+      - APP_LICENSE=${APP_LICENSE:-MIT}
+      - APP_LICENSE_URL=${APP_LICENSE_URL:-https://github.com/cn-cam/RabbitScout/blob/main/LICENSE}
+      - APP_ATTRIBUTION=${APP_ATTRIBUTION:-Based on RabbitScout (MIT)}
+      - APP_ATTRIBUTION_URL=${APP_ATTRIBUTION_URL:-https://github.com/Ralve-org/RabbitScout}
+      - APP_LOGO_URL=${APP_LOGO_URL:-/images/logo.png}
+      - RABBITMQ_HOST=${RABBITMQ_HOST:-host.docker.internal}
+      - RABBITMQ_PORT=${RABBITMQ_PORT:-15672}
+      - RABBITMQ_PROTOCOL=${RABBITMQ_PROTOCOL:-http}
+      - OPS_DB_PATH=/app/data/ops.db
+      - OPS_ENCRYPTION_KEY=${OPS_ENCRYPTION_KEY:-}
+      - OPS_MCP_TOKEN=${OPS_MCP_TOKEN:-}
+      - OPS_MCP_ALLOW_WRITE=${OPS_MCP_ALLOW_WRITE:-true}
+      - OPS_MCP_ALLOW_PEEK=${OPS_MCP_ALLOW_PEEK:-false}
+      - OPS_MCP_ALLOWED_VHOSTS=${OPS_MCP_ALLOWED_VHOSTS:-/}
+      - OPS_MCP_QUEUE_PREFIXES=${OPS_MCP_QUEUE_PREFIXES:-}
+      - OPS_RABBITMQ_USERNAME=${OPS_RABBITMQ_USERNAME:-}
+      - OPS_RABBITMQ_PASSWORD=${OPS_RABBITMQ_PASSWORD:-}
+      - OPS_POLL_INTERVAL_MS=${OPS_POLL_INTERVAL_MS:-60000}
+      - OPS_ADMIN_USERS=${OPS_ADMIN_USERS:-administrator}
+      - OPS_WEBHOOK_ALLOW_PRIVATE=${OPS_WEBHOOK_ALLOW_PRIVATE:-false}
+      - OPS_CHAT_ENABLED=${OPS_CHAT_ENABLED:-true}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - rabbitscout-data:/app/data
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "require('http').get('http://localhost:3000/api/health',(r)=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  rabbitscout-data:

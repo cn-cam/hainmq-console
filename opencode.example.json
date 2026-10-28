@@ -1,0 +1,14 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "rabbitscout-ops": {
+      "type": "local",
+      "command": ["node", "mcp/server.mjs"],
+      "enabled": true,
+      "environment": {
+        "OPS_BASE_URL": "http://127.0.0.1:3000",
+        "OPS_MCP_TOKEN": "{env:OPS_MCP_TOKEN}"
+      }
+    }
+  }
+}
