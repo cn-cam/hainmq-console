@@ -379,7 +379,7 @@
         font-size: 13px;
       }
 
-      .whisper span {
+      .whisper-label {
         display: inline-block;
         margin-right: 8px;
         color: var(--primary);
@@ -723,6 +723,7 @@
           <a href="#features">功能</a>
           <a href="#screenshots">截图</a>
           <a href="#quickstart">快速开始</a>
+          <a href="changelog.html">更新日志</a>
           <a href="https://github.com/cn-cam/hainmq-console/blob/main/docs/ops-module.zh-CN.md">文档</a>
           <a class="btn secondary nav-github" href="https://github.com/cn-cam/hainmq-console">GitHub</a>
           <a class="btn" href="https://hub.docker.com/r/cocam/hainmq-console">Docker Hub</a>
@@ -763,8 +764,8 @@
 
         <section class="whisper" aria-label="AI 旁白">
           <p>
-            <span>AI 旁白</span>
-            0 和 1 没变，变的是谁在敲键盘。AI 正在重排软件世界的牌桌，我们负责把消息队列看紧。
+            <span class="whisper-label">AI 旁白</span>
+            <span id="whisper-text">0 和 1 没变，变的是谁在敲键盘。AI 正在重排软件世界的牌桌，我们负责把消息队列看紧。</span>
           </p>
         </section>
 
@@ -947,6 +948,8 @@
           ·
           <a href="https://github.com/cn-cam/hainmq-console/blob/main/NOTICE">NOTICE</a>
           ·
+          <a href="changelog.html">Changelog</a>
+          ·
           <a href="https://github.com/cn-cam/hainmq-console">GitHub</a>
         </span>
       </div>
@@ -956,6 +959,21 @@
     </footer>
 
     <script>
+      const WHISPERS = [
+        "0 和 1 没变，变的是谁在敲键盘。AI 正在重排软件世界的牌桌，我们负责把消息队列看紧。",
+        "01 之间构建的软件正在被 AI 悄然洗牌；牌桌翻得快，队列至少还能重试。",
+        "AI 在重构世界，我们在重构队列。至少消息不会开会。",
+        "以前是人写代码给机器跑，现在是人盯着 AI 写代码给队列兜底。",
+        "代码会过时，队列会积压，只有周五的发布永远准时。",
+        "AI 洗牌，消息不洗；海心云 MQ 管理台负责把牌桌看住。",
+        "0 和 1 还是那两个数字，只是现在它们开始自己开会了。",
+        "软件世界正在被 AI 重排，我们先把 RabbitMQ 的队排好。"
+      ];
+      const whisper = document.getElementById("whisper-text");
+      if (whisper) {
+        whisper.textContent = WHISPERS[Math.floor(Math.random() * WHISPERS.length)];
+      }
+
       document.querySelectorAll("[data-copy-target]").forEach(function (button) {
         button.addEventListener("click", async function () {
           const target = document.getElementById(button.getAttribute("data-copy-target"));

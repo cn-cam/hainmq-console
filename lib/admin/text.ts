@@ -12,6 +12,11 @@ const en = {
   "tabs.federation": "Federation",
   "tabs.definitions": "Definitions",
 
+  "cluster.label": "Cluster",
+  "cluster.singleHint": "Only one cluster is configured. Set RABBITMQ_CLUSTERS to add more.",
+  "cluster.switchFailed": "Unable to switch cluster",
+  "version.label": "Running version",
+
   "common.refresh": "Refresh",
   "common.new": "New",
   "common.edit": "Edit",
@@ -134,6 +139,11 @@ const zh: Record<keyof typeof en, string> = {
   "tabs.shovels": "Shovel",
   "tabs.federation": "Federation",
   "tabs.definitions": "定义",
+
+  "cluster.label": "集群",
+  "cluster.singleHint": "当前只配置了一个集群。设置 RABBITMQ_CLUSTERS 可添加更多集群。",
+  "cluster.switchFailed": "无法切换集群",
+  "version.label": "运行版本",
 
   "common.refresh": "刷新",
   "common.new": "新建",

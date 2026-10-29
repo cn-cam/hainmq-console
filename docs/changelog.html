@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>更新日志 · 海心云 MQ 管理台</title>
+    <meta name="description" content="海心云 MQ 管理台版本更新日志" />
+    <meta name="theme-color" content="#0b0b0d" />
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+    <style>
+      :root {
+        --bg: #f8f7f4;
+        --fg: #1b1a17;
+        --muted: #6b6a65;
+        --card: rgba(255, 255, 255, 0.78);
+        --border: rgba(27, 26, 23, 0.1);
+        --primary: #f26b1d;
+        --primary-soft: rgba(242, 107, 29, 0.12);
+        --success: #1f9d61;
+        --shadow: 0 24px 70px rgba(27, 26, 23, 0.1);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0b0b0d;
+          --fg: #f5f3ef;
+          --muted: #a5a39d;
+          --card: rgba(22, 22, 26, 0.76);
+          --border: rgba(255, 255, 255, 0.11);
+          --primary: #ff8a3d;
+          --primary-soft: rgba(255, 138, 61, 0.14);
+          --success: #4ade80;
+          --shadow: 0 24px 80px rgba(0, 0, 0, 0.4);
+        }
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        color: var(--fg);
+        background: var(--bg);
+        font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+        line-height: 1.7;
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        background:
+          radial-gradient(circle at 12% 8%, color-mix(in srgb, var(--primary) 16%, transparent), transparent 42%),
+          radial-gradient(circle at 88% 78%, color-mix(in srgb, var(--primary) 10%, transparent), transparent 42%);
+      }
+
+      a { color: inherit; text-decoration: none; }
+      .wrap { width: min(980px, calc(100% - 40px)); margin: 0 auto; }
+
+      header {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        border-bottom: 1px solid var(--border);
+        background: color-mix(in srgb, var(--bg) 80%, transparent);
+        backdrop-filter: blur(18px);
+      }
+
+      .nav {
+        display: flex;
+        min-height: 64px;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+
+      .brand-mark {
+        display: grid;
+        width: 34px;
+        height: 34px;
+        place-items: center;
+        border-radius: 10px;
+        color: #fff;
+        background: linear-gradient(135deg, var(--primary), #ffb066);
+        font-weight: 800;
+      }
+
+      .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-left: auto;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .nav-links a:hover { color: var(--fg); }
+
+      main { padding: 56px 0 80px; }
+
+      .eyebrow {
+        color: var(--primary);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 10px 0 8px;
+        font-size: clamp(34px, 5vw, 56px);
+        line-height: 1.08;
+        letter-spacing: -0.045em;
+      }
+
+      .lead { max-width: 680px; margin: 0; color: var(--muted); font-size: 15px; }
+
+      .timeline { margin-top: 42px; display: grid; gap: 18px; }
+
+      .release {
+        padding: 24px;
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        background: var(--card);
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(16px);
+      }
+
+      .release-head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .release h2 { margin: 0; font-size: 22px; letter-spacing: -0.03em; }
+
+      .date { color: var(--muted); font-size: 12px; }
+
+      .badge {
+        padding: 4px 8px;
+        border-radius: 999px;
+        background: var(--primary-soft);
+        color: var(--primary);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+
+      .badge.live { background: color-mix(in srgb, var(--success) 14%, transparent); color: var(--success); }
+
+      .release h3 {
+        margin: 18px 0 8px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .release ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: 13px; }
+      .release li { margin: 4px 0; }
+      .release li strong { color: var(--fg); font-weight: 600; }
+
+      .note {
+        margin-top: 22px;
+        padding: 14px 16px;
+        border-left: 2px solid var(--primary);
+        background: linear-gradient(90deg, var(--primary-soft), transparent);
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      footer {
+        border-top: 1px solid var(--border);
+        padding: 24px 0 36px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      footer .wrap { display: flex; flex-wrap: wrap; gap: 8px 16px; justify-content: space-between; }
+      footer a { color: var(--fg); text-decoration: underline; text-decoration-color: var(--border); text-underline-offset: 3px; }
+
+      @media (max-width: 620px) {
+        .wrap { width: calc(100% - 28px); }
+        .nav-links a:not(.keep) { display: none; }
+        .release { padding: 18px; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap nav">
+        <a class="brand" href="index.html">
+          <span class="brand-mark">海</span>
+          <span>海心云 MQ 管理台</span>
+        </a>
+        <nav class="nav-links" aria-label="导航">
+          <a href="index.html">首页</a>
+          <a href="https://github.com/cn-cam/hainmq-console/blob/main/docs/ops-module.zh-CN.md">文档</a>
+          <a class="keep" href="https://github.com/cn-cam/hainmq-console">GitHub</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <div class="wrap">
+        <p class="eyebrow">Changelog</p>
+        <h1>更新日志</h1>
+        <p class="lead">
+          记录海心云 MQ 管理台的功能、运维能力与部署变化。当前 Docker Hub 已发布版本仍为 2.1.2，
+          下列 2.1.3 内容处于待发布状态。
+        </p>
+
+        <div class="timeline">
+          <section class="release">
+            <div class="release-head">
+              <h2>2.1.3</h2>
+              <span class="badge">待发布</span>
+              <span class="date">Unreleased</span>
+            </div>
+
+            <h3>多集群与管理</h3>
+            <ul>
+              <li><strong>多集群切换</strong>：登录选择集群，顶栏和后台均可切换，凭据按目标集群重新校验。</li>
+              <li><strong>管理对象</strong>：vhosts、users、permissions、policies、parameters、nodes、feature flags。</li>
+              <li><strong>Shovel / Federation</strong>：只读查看运行状态。</li>
+              <li><strong>Definitions</strong>：导入/导出 RabbitMQ definitions。</li>
+            </ul>
+
+            <h3>消息与拓扑</h3>
+            <ul>
+              <li><strong>消息运维</strong>：筛选、移动/重放到队列或交换机，支持 DLQ 后缀预填与失败退回源队列。</li>
+              <li><strong>拓扑图</strong>：交换机、队列、绑定关系可视化，支持搜索与 vhost 范围。</li>
+              <li><strong>批量操作</strong>：队列批量清空/删除，带 dry-run 预览和逐队列结果。</li>
+              <li><strong>消费者</strong>：队列详情支持远程取消消费者。</li>
+            </ul>
+
+            <h3>运维与安全</h3>
+            <ul>
+              <li><strong>告警</strong>：钉钉/飞书/企微/Slack/Teams/Telegram 预设、升级通道、1/4/24 小时静默、Runbook URL。</li>
+              <li><strong>审计与角色</strong>：审计筛选/CSV 导出、本地角色覆盖、双人审批。</li>
+              <li><strong>可靠性</strong>：SQLite WAL、每日备份、暂存式恢复、小时降采样、启动完整性检查。</li>
+              <li><strong>可观测性</strong>：Prometheus <code>/api/metrics</code>、活动告警铃铛、PWA manifest。</li>
+              <li><strong>安全</strong>：同源写校验、登录限流、安全响应头、npm audit/Trivy/CodeQL 流水线。</li>
+            </ul>
+
+            <h3>体验</h3>
+            <ul>
+              <li>队列收藏与命名视图；拓扑、批量操作和通知中心。</li>
+              <li>依赖升级：Next.js 16.4.3、React 19.3、motion 14、nodemailer 10；依赖审计 0 漏洞。</li>
+            </ul>
+          </section>
+
+          <section class="release">
+            <div class="release-head">
+              <h2>2.1.2</h2>
+              <span class="badge live">已发布</span>
+              <span class="date">2026-10-29</span>
+            </div>
+            <ul>
+              <li>CI 改为 amd64 / arm64 原生构建，避免 QEMU 下的 arm64 构建卡死。</li>
+              <li>Docker Hub 只发布版本标签：<code>2.1.2</code>、<code>2.1</code>、<code>2</code>、<code>latest</code>。</li>
+              <li>GitHub Pages 项目主页上线。</li>
+            </ul>
+          </section>
+
+          <section class="release">
+            <div class="release-head">
+              <h2>2.1.1</h2>
+              <span class="badge live">已发布</span>
+              <span class="date">2026-10-28</span>
+            </div>
+            <ul>
+              <li>Docker Hub 多架构镜像与品牌资源整理。</li>
+              <li>运维模块、MCP、告警和模型对话的早期版本。</li>
+            </ul>
+          </section>
+
+          <section class="release">
+            <div class="release-head">
+              <h2>2.1.0</h2>
+              <span class="badge live">已发布</span>
+              <span class="date">Initial</span>
+            </div>
+            <ul>
+              <li>基于 RabbitScout 的分支版本，包含仪表盘、队列、交换机、连接、通道和中英文界面。</li>
+            </ul>
+          </section>
+        </div>
+
+        <p class="note">
+          版本号以当前运行镜像中的 <code>package.json</code> 为准；后台管理页右上角会显示当前运行版本。
+        </p>
+      </div>
+    </main>
+
+    <footer>
+      <div class="wrap">
+        <span>© 2026 海心云 · MIT License · Based on RabbitScout (MIT)</span>
+        <span><a href="index.html">首页</a> · <a href="https://github.com/cn-cam/hainmq-console">GitHub</a></span>
+      </div>
+    </footer>
+  </body>
+</html>
