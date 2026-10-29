@@ -3,20 +3,163 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>海心云 MQ 管理台 · HainMQ Console</title>
+    <title>海心云 MQ 管理台 | RabbitMQ 管理、监控、告警与多集群运维</title>
     <meta
       name="description"
-      content="海心云 MQ 管理台：现代化 RabbitMQ 管理与运维控制台，支持监控、告警、MCP 自动化和模型辅助对话。"
+      content="海心云 MQ 管理台（HainMQ Console）是面向自用与内网环境的 RabbitMQ 管理与运维控制台，支持多集群切换、队列与消息运维、告警、审计、备份、MCP 自动化和中英文界面。"
     />
+    <meta
+      name="keywords"
+      content="海心云,海心云 MQ 管理台,HainMQ Console,RabbitMQ 管理台,RabbitMQ 管理界面,RabbitMQ 监控,RabbitMQ 告警,RabbitMQ 运维,RabbitMQ 多集群,MQ 管理平台,消息队列管理,消息队列监控,RabbitMQ Docker,RabbitMQ MCP,RabbitMQ AI 运维,海心云 消息队列"
+    />
+    <meta name="author" content="海心云" />
+    <meta name="copyright" content="© 2026 海心云" />
     <meta name="theme-color" content="#0b0b0d" />
-    <meta property="og:title" content="海心云 MQ 管理台 · HainMQ Console" />
+    <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
+    <meta name="applicable-device" content="pc,mobile" />
+    <meta name="format-detection" content="telephone=no" />
+    <link rel="canonical" href="https://cn-cam.github.io/hainmq-console/" />
+    <link rel="alternate" hreflang="zh-CN" href="https://cn-cam.github.io/hainmq-console/" />
+    <link rel="alternate" hreflang="x-default" href="https://cn-cam.github.io/hainmq-console/" />
+    <link rel="sitemap" type="application/xml" href="sitemap.xml" />
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="海心云 MQ 管理台" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta property="og:url" content="https://cn-cam.github.io/hainmq-console/" />
+    <meta property="og:title" content="海心云 MQ 管理台 | RabbitMQ 管理、监控、告警与多集群运维" />
     <meta
       property="og:description"
-      content="现代化 RabbitMQ 管理与运维控制台：监控、告警、MCP 自动化、模型辅助对话。"
+      content="面向自用与内网环境的 RabbitMQ 管理与运维控制台：多集群、队列与消息运维、告警、审计、备份、MCP 自动化和中英文界面。"
     />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="assets/ops-zh-dark.png" />
-    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+    <meta property="og:image" content="https://cn-cam.github.io/hainmq-console/assets/ops-zh-dark.png" />
+    <meta property="og:image:alt" content="海心云 MQ 管理台 RabbitMQ 运维规则页面截图" />
+    <meta property="og:image:width" content="1500" />
+    <meta property="og:image:height" content="860" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="海心云 MQ 管理台 | RabbitMQ 管理、监控、告警与多集群运维" />
+    <meta
+      name="twitter:description"
+      content="面向自用与内网环境的 RabbitMQ 管理与运维控制台：多集群、队列与消息运维、告警、审计、备份、MCP 自动化和中英文界面。"
+    />
+    <meta name="twitter:image" content="https://cn-cam.github.io/hainmq-console/assets/ops-zh-dark.png" />
+    <meta name="twitter:image:alt" content="海心云 MQ 管理台 RabbitMQ 运维规则页面截图" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://cn-cam.github.io/hainmq-console/#organization",
+            "name": "海心云",
+            "url": "https://cn-cam.github.io/hainmq-console/",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://cn-cam.github.io/hainmq-console/icon.svg"
+            },
+            "sameAs": [
+              "https://github.com/cn-cam/hainmq-console",
+              "https://hub.docker.com/r/cocam/hainmq-console"
+            ]
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://cn-cam.github.io/hainmq-console/#website",
+            "url": "https://cn-cam.github.io/hainmq-console/",
+            "name": "海心云 MQ 管理台",
+            "alternateName": "HainMQ Console",
+            "inLanguage": ["zh-CN", "en"],
+            "publisher": { "@id": "https://cn-cam.github.io/hainmq-console/#organization" }
+          },
+          {
+            "@type": "SoftwareApplication",
+            "@id": "https://cn-cam.github.io/hainmq-console/#software",
+            "name": "海心云 MQ 管理台",
+            "alternateName": "HainMQ Console",
+            "applicationCategory": "DeveloperApplication",
+            "applicationSubCategory": "RabbitMQ management and operations",
+            "operatingSystem": "Linux, Docker",
+            "softwareVersion": "2.1.2",
+            "url": "https://cn-cam.github.io/hainmq-console/",
+            "downloadUrl": "https://hub.docker.com/r/cocam/hainmq-console",
+            "codeRepository": "https://github.com/cn-cam/hainmq-console",
+            "license": "https://github.com/cn-cam/hainmq-console/blob/main/LICENSE",
+            "isAccessibleForFree": true,
+            "inLanguage": ["zh-CN", "en"],
+            "publisher": { "@id": "https://cn-cam.github.io/hainmq-console/#organization" },
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "CNY" },
+            "description": "面向自用与内网环境的 RabbitMQ 管理与运维控制台，支持多集群、队列与消息运维、告警、审计、备份、MCP 自动化和中英文界面。",
+            "featureList": [
+              "RabbitMQ 多集群管理",
+              "队列、交换机、绑定与消息运维",
+              "DLQ 重放与消息移动",
+              "告警、升级、静默与维护窗口",
+              "审计日志、SQLite 备份与恢复",
+              "MCP 自动化与模型辅助对话",
+              "Prometheus 指标",
+              "中英文界面"
+            ]
+          },
+          {
+            "@type": "FAQPage",
+            "@id": "https://cn-cam.github.io/hainmq-console/#faq",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "海心云 MQ 管理台是什么？",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "海心云 MQ 管理台（HainMQ Console）是面向自用与内网环境的 RabbitMQ 管理与运维控制台，提供队列管理、监控、告警、审计、备份、多集群和 MCP 自动化能力。"
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "支持哪些 RabbitMQ 版本？",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "支持启用 rabbitmq_management 插件的 RabbitMQ 3.x 和 4.x，通过 Management HTTP API 工作。"
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "是否支持多集群切换？",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "支持。通过 RABBITMQ_CLUSTERS 配置多个 Management 端点，登录时选择集群，登录后可在顶栏或后台切换，并会针对目标集群重新校验凭据。"
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "是否需要 PostgreSQL 或 Redis？",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "不需要。运维数据使用嵌入式 SQLite，调度器运行在应用进程内，目标是单容器部署，不引入额外服务依赖。"
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "关闭浏览器后告警会停止吗？",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "不会。告警由服务端调度器生成并保存在 SQLite 中，关闭浏览器只停止页面轮询，邮件和 Webhook 仍会继续发送。"
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "如何部署海心云 MQ 管理台？",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "推荐使用 Docker 镜像 cocam/hainmq-console:2.1.2，挂载 /app/data，开放 3000 端口，并通过 HTTPS 反向代理访问。"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    </script>
     <style>
       :root {
         --bg: #f8f7f4;
@@ -398,6 +541,35 @@
         grid-template-columns: repeat(3, minmax(0, 1fr));
       }
 
+      .faq {
+        display: grid;
+        max-width: 900px;
+        gap: 10px;
+      }
+
+      .faq details {
+        padding: 14px 16px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--card);
+      }
+
+      .faq summary {
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .faq details[open] summary {
+        color: var(--primary);
+      }
+
+      .faq details p {
+        margin: 8px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
       .card {
         padding: 20px;
         border: 1px solid var(--border);
@@ -721,6 +893,8 @@
         </a>
         <nav class="nav-links" aria-label="主导航">
           <a href="#features">功能</a>
+          <a href="#about">关于</a>
+          <a href="#faq">FAQ</a>
           <a href="#screenshots">截图</a>
           <a href="#quickstart">快速开始</a>
           <a href="changelog.html">更新日志</a>
@@ -757,7 +931,7 @@
           <div class="hero-visual">
             <div class="window">
               <div class="window-bar"><i></i><i></i><i></i><span>hainmq-console / ops / rules</span></div>
-              <img src="assets/ops-zh-dark.png" alt="海心云 MQ 管理台运维规则页" />
+              <img src="assets/ops-zh-dark.png" alt="海心云 MQ 管理台 RabbitMQ 运维规则页面（中文深色）" width="1500" height="860" fetchpriority="high" />
             </div>
           </div>
         </section>
@@ -809,6 +983,70 @@
           </div>
         </section>
 
+        <section id="about">
+          <div class="section-head">
+            <p class="kicker">About HainMQ</p>
+            <h2>海心云 MQ 管理台：为内网 RabbitMQ 运维而生</h2>
+            <p>
+              海心云 MQ 管理台（HainMQ Console）把 RabbitMQ 管理、监控、告警和运维自动化放进一个自用平台。
+              它不改变 RabbitMQ 服务端，不需要 PostgreSQL 或 Redis，单个 Docker 容器即可运行，适合内网、
+              测试环境和中小规模生产集群。
+            </p>
+          </div>
+          <div class="grid two-col">
+            <article class="card">
+              <h3>自用、内网优先</h3>
+              <p>面向团队内部使用，不做多租户 SaaS；沿用 RabbitMQ 账号与权限体系，敏感数据留在自己的网络里。</p>
+            </article>
+            <article class="card">
+              <h3>单容器、无额外依赖</h3>
+              <p>嵌入式 SQLite + 进程内调度器，不引入 PostgreSQL、Redis 或独立 Worker，部署和迁移更简单。</p>
+            </article>
+            <article class="card">
+              <h3>多集群与运维闭环</h3>
+              <p>统一管理多个 RabbitMQ Management 端点，覆盖队列、消息、DLQ、告警、审计、备份和审批。</p>
+            </article>
+            <article class="card">
+              <h3>可审计、可回滚</h3>
+              <p>写操作审批、审计日志、SQLite 备份与暂存式恢复，让日常运维有记录、有退路。</p>
+            </article>
+          </div>
+        </section>
+
+        <section id="faq">
+          <div class="section-head">
+            <p class="kicker">FAQ</p>
+            <h2>关于海心云 MQ 管理台的常见问题</h2>
+            <p>部署、兼容性、多集群和告警行为，一次说清楚。</p>
+          </div>
+          <div class="faq">
+            <details>
+              <summary>海心云 MQ 管理台是什么？</summary>
+              <p>海心云 MQ 管理台（HainMQ Console）是面向自用与内网环境的 RabbitMQ 管理与运维控制台，提供队列管理、监控、告警、审计、备份、多集群和 MCP 自动化能力。</p>
+            </details>
+            <details>
+              <summary>支持哪些 RabbitMQ 版本？</summary>
+              <p>支持启用 <code>rabbitmq_management</code> 插件的 RabbitMQ 3.x 和 4.x，通过 Management HTTP API 工作。</p>
+            </details>
+            <details>
+              <summary>是否支持多集群切换？</summary>
+              <p>支持。通过 <code>RABBITMQ_CLUSTERS</code> 配置多个 Management 端点，登录时选择集群，登录后可在顶栏或后台切换，并会针对目标集群重新校验凭据。</p>
+            </details>
+            <details>
+              <summary>是否需要 PostgreSQL 或 Redis？</summary>
+              <p>不需要。运维数据使用嵌入式 SQLite，调度器运行在应用进程内，目标是单容器部署，不引入额外服务依赖。</p>
+            </details>
+            <details>
+              <summary>关闭浏览器后告警会停止吗？</summary>
+              <p>不会。告警由服务端调度器生成并保存在 SQLite 中，关闭浏览器只停止页面轮询，邮件和 Webhook 仍会继续发送。</p>
+            </details>
+            <details>
+              <summary>如何部署海心云 MQ 管理台？</summary>
+              <p>推荐使用 Docker 镜像 <code>cocam/hainmq-console:2.1.2</code>，挂载 <code>/app/data</code>，开放 3000 端口，并通过 HTTPS 反向代理访问。</p>
+            </details>
+          </div>
+        </section>
+
         <section id="screenshots">
           <div class="section-head">
             <p class="kicker">Screenshots</p>
@@ -817,19 +1055,19 @@
           </div>
           <div class="grid shots">
             <div class="shot">
-              <img src="assets/ops-zh-dark.png" alt="中文深色运维规则页" loading="lazy" />
+              <img src="assets/ops-zh-dark.png" alt="海心云 MQ 管理台 RabbitMQ 运维规则页面（中文深色）" width="1500" height="860" loading="lazy" />
               <p><span>简体中文 · 深色</span><span>Rules</span></p>
             </div>
             <div class="shot">
-              <img src="assets/ops-zh-light.png" alt="中文浅色运维规则页" loading="lazy" />
+              <img src="assets/ops-zh-light.png" alt="海心云 MQ 管理台 RabbitMQ 运维规则页面（中文浅色）" width="1500" height="860" loading="lazy" />
               <p><span>简体中文 · 浅色</span><span>Rules</span></p>
             </div>
             <div class="shot">
-              <img src="assets/ops-en-dark.png" alt="English dark operations rules page" loading="lazy" />
+              <img src="assets/ops-en-dark.png" alt="HainMQ Console RabbitMQ operations rules page (English dark)" width="1500" height="860" loading="lazy" />
               <p><span>English · Dark</span><span>Rules</span></p>
             </div>
             <div class="shot">
-              <img src="assets/ops-en-light.png" alt="English light operations rules page" loading="lazy" />
+              <img src="assets/ops-en-light.png" alt="HainMQ Console RabbitMQ operations rules page (English light)" width="1500" height="860" loading="lazy" />
               <p><span>English · Light</span><span>Rules</span></p>
             </div>
           </div>
@@ -924,7 +1162,7 @@
           <div class="section-head">
             <p class="kicker">Deployment</p>
             <h2>部署方式</h2>
-            <p>GitHub Pages 只承载这个静态主页；应用本身需要 Docker 运行时。</p>
+            <p>静态托管只承载这个主页；应用本身需要 Docker 运行时。</p>
           </div>
           <div class="two-col">
             <div class="card">

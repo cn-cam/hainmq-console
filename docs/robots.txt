@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://cn-cam.github.io/hainmq-console/sitemap.xml
