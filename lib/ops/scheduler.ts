@@ -1,3 +1,4 @@
+import { createBackup, pruneBackups } from "./backup"
 import { hasEncryptionKey } from "./crypto"
 import { getDb, insertAuditLog, now, pruneOpsData } from "./db"
 import { evaluateRules, seedDefaultRules } from "./engine"
@@ -20,6 +21,7 @@ declare global {
 
 let lastCollectAt = 0
 let lastPruneAt = 0
+let lastBackupAt = Date.now()
 let ticking = false
 
 function seedDefaultTarget() {
@@ -189,6 +191,16 @@ async function tick() {
     if (current - lastPruneAt >= 60 * 60 * 1000) {
       lastPruneAt = current
       pruneOpsData()
+    }
+
+    if (current - lastBackupAt >= 24 * 60 * 60 * 1000) {
+      lastBackupAt = current
+      try {
+        createBackup()
+        pruneBackups(settings.backupRetentionDays)
+      } catch (error) {
+        console.error("[ops] scheduled backup failed", error)
+      }
     }
   } catch (error) {
     console.error("[ops] scheduler tick failed", error)

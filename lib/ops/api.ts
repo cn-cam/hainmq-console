@@ -1,4 +1,6 @@
+import { readFile } from "node:fs/promises"
 import { NextResponse } from "next/server"
+import { backupPath, createBackup, deleteBackup, listBackups, stageRestore } from "./backup"
 import { decryptChannelConfig, testChannel } from "./notify"
 import { getMetricDefinition } from "./metrics"
 import { fetchTargetJson } from "./rabbitmq"
@@ -14,6 +16,7 @@ import {
   createRule,
   createTarget,
   deleteChannel,
+  deleteLocalRole,
   deleteModelProfile,
   deleteRule,
   deleteTarget,
@@ -28,11 +31,13 @@ import {
   listAuditLogs,
   listChannelRows,
   listChatMessages,
+  listLocalRoles,
   listModelProfiles,
   listNotifications,
   listRules,
   listTargets,
   listApprovals,
+  setLocalRole,
   touchChatSession,
   updateChannel,
   updateModelProfile,
@@ -53,10 +58,24 @@ import type {
   OpsTargetInput,
   OpsUser,
   WebhookConfig,
+  WebhookPreset,
 } from "./types"
 
 function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status })
+}
+
+function csvCell(value: unknown): string {
+  const text = value === null || value === undefined ? "" : String(value)
+  return `"${text.replaceAll('"', '""')}"`
+}
+
+function parseTime(value: string | null): number | undefined {
+  if (!value) return undefined
+  const numeric = Number(value)
+  if (Number.isFinite(numeric) && numeric > 0) return numeric
+  const parsed = Date.parse(value)
+  return Number.isFinite(parsed) ? parsed : undefined
 }
 
 function asString(value: unknown, field: string): string {
@@ -224,6 +243,8 @@ function parseRuleInput(body: Record<string, unknown>, partial = false): Partial
   if (!partial || body.severity !== undefined) input.severity = String(body.severity || "warning") as OpsRuleInput["severity"]
   if (body.enabled !== undefined) input.enabled = asBool(body.enabled, true)
   if (!partial || body.channelIds !== undefined) input.channelIds = asNumberArray(body.channelIds)
+  if (body.escalationChannelIds !== undefined) input.escalationChannelIds = asNumberArray(body.escalationChannelIds)
+  if (body.escalationAfterSec !== undefined) input.escalationAfterSec = Math.max(0, asNumber(body.escalationAfterSec, "escalationAfterSec", 0))
   if (body.template !== undefined) input.template = body.template ? String(body.template) : null
   if (body.cooldownSec !== undefined) input.cooldownSec = Math.max(60, asNumber(body.cooldownSec, "cooldownSec", 900))
 
@@ -263,6 +284,17 @@ function parseChannelInput(body: Record<string, unknown>): OpsChannelInput {
     }
     if (!config.to.length) throw new OpsHttpError(400, "config.to must contain at least one recipient")
   } else if (type === "webhook") {
+    const presets: WebhookPreset[] = [
+      "generic",
+      "dingtalk",
+      "feishu",
+      "wecom",
+      "slack",
+      "teams",
+      "telegram",
+    ]
+    const preset = String(raw.preset || "generic") as WebhookPreset
+    if (!presets.includes(preset)) throw new OpsHttpError(400, "Unsupported webhook preset")
     config = {
       url: asString(raw.url, "config.url"),
       method: String(raw.method || "POST").toUpperCase(),
@@ -272,6 +304,8 @@ function parseChannelInput(body: Record<string, unknown>): OpsChannelInput {
       retries: raw.retries === undefined ? 3 : asNumber(raw.retries, "config.retries", 3),
       secret: raw.secret ? String(raw.secret) : undefined,
       allowPrivate: raw.allowPrivate === undefined ? false : asBool(raw.allowPrivate, false),
+      preset,
+      chatId: raw.chatId ? String(raw.chatId) : undefined,
     }
   } else {
     throw new OpsHttpError(400, "Unsupported channel type")
@@ -320,7 +354,12 @@ export async function handleOpsApi(request: Request, segments: string[]) {
     const id = segments[1] ? Number(segments[1]) : null
 
     if (resource === "me") {
-      return json({ role: user.role, username: user.username, isAdmin: user.role === "admin" })
+      return json({
+        role: user.role,
+        username: user.username,
+        isAdmin: user.role === "admin",
+        twoPersonApproval: getSettings().twoPersonApproval,
+      })
     }
 
     if (resource === "overview" && method === "GET") {
@@ -513,9 +552,12 @@ export async function handleOpsApi(request: Request, segments: string[]) {
           sampleRetentionDays: body.sampleRetentionDays === undefined ? undefined : Math.max(1, asNumber(body.sampleRetentionDays, "sampleRetentionDays")),
           alertRetentionDays: body.alertRetentionDays === undefined ? undefined : Math.max(1, asNumber(body.alertRetentionDays, "alertRetentionDays")),
           notificationRetentionDays: body.notificationRetentionDays === undefined ? undefined : Math.max(1, asNumber(body.notificationRetentionDays, "notificationRetentionDays")),
+          auditRetentionDays: body.auditRetentionDays === undefined ? undefined : Math.max(1, asNumber(body.auditRetentionDays, "auditRetentionDays")),
+          backupRetentionDays: body.backupRetentionDays === undefined ? undefined : Math.max(1, asNumber(body.backupRetentionDays, "backupRetentionDays")),
           timezone: body.timezone === undefined ? undefined : String(body.timezone),
           webhookAllowPrivate: body.webhookAllowPrivate === undefined ? undefined : asBool(body.webhookAllowPrivate, false),
           chatEnabled: body.chatEnabled === undefined ? undefined : asBool(body.chatEnabled, true),
+          twoPersonApproval: body.twoPersonApproval === undefined ? undefined : asBool(body.twoPersonApproval, false),
           maintenanceUntil: body.maintenanceUntil === undefined ? undefined : body.maintenanceUntil ? Number(body.maintenanceUntil) : null,
         })
         insertAuditLog({ actor: user.username, action: "settings.update", details: settings })
@@ -525,7 +567,101 @@ export async function handleOpsApi(request: Request, segments: string[]) {
 
     if (resource === "audit" && method === "GET") {
       requireAdmin(user)
-      return json(listAuditLogs(500))
+      const params = new URL(request.url).searchParams
+      const logs = listAuditLogs({
+        limit: Math.min(5000, Math.max(1, Number(params.get("limit") || 500))),
+        actor: params.get("actor") || undefined,
+        action: params.get("action") || undefined,
+        target: params.get("target") || undefined,
+        from: parseTime(params.get("from")),
+        to: parseTime(params.get("to")),
+      })
+
+      if (params.get("format") === "csv") {
+        const header = ["id", "ts", "actor", "action", "target", "result", "details"]
+        const lines = [
+          header.join(","),
+          ...logs.map((entry) =>
+            [
+              entry.id,
+              new Date(entry.ts).toISOString(),
+              entry.actor,
+              entry.action,
+              entry.target,
+              entry.result,
+              entry.details === null ? "" : JSON.stringify(entry.details),
+            ]
+              .map(csvCell)
+              .join(","),
+          ),
+        ]
+        return new NextResponse(lines.join("\n"), {
+          headers: {
+            "Content-Type": "text/csv; charset=utf-8",
+            "Content-Disposition": `attachment; filename="hainmq-audit-${new Date().toISOString().slice(0, 10)}.csv"`,
+          },
+        })
+      }
+
+      return json(logs)
+    }
+
+    if (resource === "local-users") {
+      requireAdmin(user)
+      if (method === "GET" && !segments[1]) return json(listLocalRoles())
+      const username = segments[1] ? decodeURIComponent(segments[1]) : ""
+      if (!username) throw new OpsHttpError(400, "username is required")
+      if (method === "PUT") {
+        const body = await readJson(request)
+        const role = String(body.role || "")
+        if (role !== "admin" && role !== "operator" && role !== "viewer") {
+          throw new OpsHttpError(400, "role must be admin, operator, or viewer")
+        }
+        setLocalRole(username, role, user.username)
+        insertAuditLog({ actor: user.username, action: "local_role.set", target: username, details: { role } })
+        return json({ username, role })
+      }
+      if (method === "DELETE") {
+        deleteLocalRole(username)
+        insertAuditLog({ actor: user.username, action: "local_role.delete", target: username })
+        return json({ ok: true })
+      }
+    }
+
+    if (resource === "backups") {
+      requireAdmin(user)
+      if (method === "GET" && !segments[1]) return json(listBackups())
+      if (method === "POST" && !segments[1]) {
+        const backup = createBackup()
+        insertAuditLog({ actor: user.username, action: "backup.create", target: backup.name })
+        return json(backup, 201)
+      }
+    }
+
+    if (resource === "backups" && segments[1]) {
+      requireAdmin(user)
+      const name = decodeURIComponent(segments[1])
+      if (segments[2] === "download" && method === "GET") {
+        const file = backupPath(name)
+        if (!file) throw new OpsHttpError(404, "Backup not found")
+        const data = await readFile(file)
+        return new NextResponse(new Uint8Array(data), {
+          headers: {
+            "Content-Type": "application/vnd.sqlite3",
+            "Content-Disposition": `attachment; filename="${name}"`,
+          },
+        })
+      }
+      if (segments[2] === "restore" && method === "POST") {
+        if (!stageRestore(name)) throw new OpsHttpError(404, "Backup not found")
+        insertAuditLog({ actor: user.username, action: "backup.restore", target: name })
+        return json({ ok: true, restartRequired: true })
+      }
+      if (method === "DELETE") {
+        if (!deleteBackup(name)) throw new OpsHttpError(404, "Backup not found")
+        insertAuditLog({ actor: user.username, action: "backup.delete", target: name })
+        return json({ ok: true })
+      }
     }
 
     if (resource === "approvals") {

@@ -9,6 +9,7 @@ import type {
   OpsChannel,
   OpsChannelInput,
   OpsNotification,
+  OpsRole,
   OpsRule,
   OpsRuleInput,
   OpsTarget,
@@ -124,6 +125,8 @@ function ruleFromRow(row: Row): OpsRule {
     severity: String(row.severity) as OpsRule["severity"],
     enabled: bool(row.enabled),
     channelIds: jsonParse<number[]>(String(row.channel_ids || "[]"), []),
+    escalationChannelIds: jsonParse<number[]>(String(row.escalation_channel_ids || "[]"), []),
+    escalationAfterSec: Number(row.escalation_after_sec ?? 0),
     template: row.template ? String(row.template) : null,
     cooldownSec: Number(row.cooldown_sec ?? 900),
     createdAt: Number(row.created_at),
@@ -147,8 +150,9 @@ export function createRule(input: OpsRuleInput): OpsRule {
     .prepare(
       `INSERT INTO ops_rules
         (name, target_id, scope_type, scope_value, metric, operator, threshold, duration_sec,
-         severity, enabled, channel_ids, template, cooldown_sec, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         severity, enabled, channel_ids, escalation_channel_ids, escalation_after_sec,
+         template, cooldown_sec, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .run(
       input.name,
@@ -162,6 +166,8 @@ export function createRule(input: OpsRuleInput): OpsRule {
       input.severity,
       input.enabled === false ? 0 : 1,
       JSON.stringify(input.channelIds || []),
+      JSON.stringify(input.escalationChannelIds || []),
+      input.escalationAfterSec ?? 0,
       input.template || null,
       input.cooldownSec ?? 900,
       ts,
@@ -178,6 +184,7 @@ export function updateRule(id: number, input: Partial<OpsRuleInput>): OpsRule | 
       `UPDATE ops_rules SET
         name = ?, target_id = ?, scope_type = ?, scope_value = ?, metric = ?, operator = ?,
         threshold = ?, duration_sec = ?, severity = ?, enabled = ?, channel_ids = ?,
+        escalation_channel_ids = ?, escalation_after_sec = ?,
         template = ?, cooldown_sec = ?, updated_at = ?
        WHERE id = ?`,
     )
@@ -193,6 +200,8 @@ export function updateRule(id: number, input: Partial<OpsRuleInput>): OpsRule | 
       input.severity ?? existing.severity,
       input.enabled === undefined ? (existing.enabled ? 1 : 0) : input.enabled ? 1 : 0,
       JSON.stringify(input.channelIds ?? existing.channelIds),
+      JSON.stringify(input.escalationChannelIds ?? existing.escalationChannelIds),
+      input.escalationAfterSec ?? existing.escalationAfterSec,
       input.template === undefined ? existing.template : input.template,
       input.cooldownSec ?? existing.cooldownSec,
       now(),
@@ -308,6 +317,7 @@ function alertFromRow(row: Row): OpsAlert {
     ackBy: row.ack_by ? String(row.ack_by) : null,
     silencedUntil: row.silenced_until ? Number(row.silenced_until) : null,
     lastNotifiedAt: row.last_notified_at ? Number(row.last_notified_at) : null,
+    escalatedAt: row.escalated_at ? Number(row.escalated_at) : null,
   }
 }
 
@@ -361,6 +371,8 @@ function approvalFromRow(row: Row): OpsApproval {
     requestedAt: Number(row.requested_at),
     decidedBy: row.decided_by ? String(row.decided_by) : null,
     decidedAt: row.decided_at ? Number(row.decided_at) : null,
+    firstApprovedBy: row.first_approved_by ? String(row.first_approved_by) : null,
+    firstApprovedAt: row.first_approved_at ? Number(row.first_approved_at) : null,
     executedAt: row.executed_at ? Number(row.executed_at) : null,
     result: row.result ? String(row.result) : null,
     expiresAt: Number(row.expires_at),
@@ -422,6 +434,60 @@ export function updateApproval(
        WHERE id = ?`,
     )
     .run(status, actor, ts, status === "executed" || status === "failed" ? ts : null, result, id)
+}
+
+export function recordFirstApproval(id: string, actor: string) {
+  getDb()
+    .prepare(
+      "UPDATE ops_approvals SET first_approved_by = ?, first_approved_at = ? WHERE id = ?",
+    )
+    .run(actor, now(), id)
+}
+
+export interface LocalRole {
+  username: string
+  role: OpsRole
+  updatedBy: string
+  updatedAt: number
+}
+
+export function getLocalRole(username: string): LocalRole | null {
+  const row = getDb()
+    .prepare("SELECT * FROM ops_local_roles WHERE username = ?")
+    .get(username) as Row | undefined
+  if (!row) return null
+  return {
+    username: String(row.username),
+    role: String(row.role) as OpsRole,
+    updatedBy: String(row.updated_by),
+    updatedAt: Number(row.updated_at),
+  }
+}
+
+export function listLocalRoles(): LocalRole[] {
+  const rows = getDb()
+    .prepare("SELECT * FROM ops_local_roles ORDER BY username ASC")
+    .all() as Row[]
+  return rows.map((row) => ({
+    username: String(row.username),
+    role: String(row.role) as OpsRole,
+    updatedBy: String(row.updated_by),
+    updatedAt: Number(row.updated_at),
+  }))
+}
+
+export function setLocalRole(username: string, role: OpsRole, actor: string) {
+  getDb()
+    .prepare(
+      `INSERT INTO ops_local_roles (username, role, updated_by, updated_at)
+       VALUES (?, ?, ?, ?)
+       ON CONFLICT(username) DO UPDATE SET role = excluded.role, updated_by = excluded.updated_by, updated_at = excluded.updated_at`,
+    )
+    .run(username, role, actor, now())
+}
+
+export function deleteLocalRole(username: string) {
+  getDb().prepare("DELETE FROM ops_local_roles WHERE username = ?").run(username)
 }
 
 function modelFromRow(row: Row): ModelProfile {
@@ -618,10 +684,47 @@ export function touchChatSession(id: string) {
   getDb().prepare("UPDATE ops_chat_sessions SET updated_at = ? WHERE id = ?").run(now(), id)
 }
 
-export function listAuditLogs(limit = 200) {
+export interface AuditLogQuery {
+  limit?: number
+  actor?: string
+  action?: string
+  target?: string
+  from?: number
+  to?: number
+}
+
+export function listAuditLogs(input: number | AuditLogQuery = 200) {
+  const query = typeof input === "number" ? { limit: input } : input
+  const clauses: string[] = []
+  const params: Array<string | number> = []
+
+  if (query.actor) {
+    clauses.push("actor LIKE ?")
+    params.push(`%${query.actor}%`)
+  }
+  if (query.action) {
+    clauses.push("action LIKE ?")
+    params.push(`%${query.action}%`)
+  }
+  if (query.target) {
+    clauses.push("target LIKE ?")
+    params.push(`%${query.target}%`)
+  }
+  if (query.from) {
+    clauses.push("ts >= ?")
+    params.push(query.from)
+  }
+  if (query.to) {
+    clauses.push("ts <= ?")
+    params.push(query.to)
+  }
+
+  const where = clauses.length ? `WHERE ${clauses.join(" AND ")}` : ""
+  const limit = Math.min(5000, Math.max(1, query.limit ?? 200))
   const rows = getDb()
-    .prepare("SELECT * FROM ops_audit_logs ORDER BY ts DESC LIMIT ?")
-    .all(limit) as Row[]
+    .prepare(`SELECT * FROM ops_audit_logs ${where} ORDER BY ts DESC LIMIT ?`)
+    .all(...params, limit) as Row[]
+
   return rows.map((row) => ({
     id: Number(row.id),
     ts: Number(row.ts),

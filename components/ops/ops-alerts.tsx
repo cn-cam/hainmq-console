@@ -7,9 +7,11 @@ import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
 import {
   Select,
   SelectContent,
@@ -50,6 +52,8 @@ export function OpsAlerts() {
   const [busy, setBusy] = React.useState<number | null>(null)
   const [notificationsFor, setNotificationsFor] = React.useState<OpsAlert | null>(null)
   const [notifications, setNotifications] = React.useState<OpsNotification[]>([])
+  const [silenceFor, setSilenceFor] = React.useState<OpsAlert | null>(null)
+  const [silenceHours, setSilenceHours] = React.useState("1")
 
   const load = React.useCallback(async () => {
     try {
@@ -78,6 +82,23 @@ export function OpsAlerts() {
     setBusy(alert.id)
     try {
       await opsPost(`/alerts/${alert.id}`, { action })
+      await load()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : tr("errors.generic"))
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const silence = async () => {
+    if (!silenceFor) return
+    setBusy(silenceFor.id)
+    try {
+      await opsPost(`/alerts/${silenceFor.id}`, {
+        action: "silence",
+        until: Date.now() + Number(silenceHours) * 3600_000,
+      })
+      setSilenceFor(null)
       await load()
     } catch (err) {
       setError(err instanceof Error ? err.message : tr("errors.generic"))
@@ -193,7 +214,10 @@ export function OpsAlerts() {
                             size="sm"
                             className="h-6 px-2 text-[11px]"
                             disabled={busy === alert.id}
-                            onClick={() => void act(alert, "silence")}
+                            onClick={() => {
+                              setSilenceFor(alert)
+                              setSilenceHours("1")
+                            }}
                           >
                             {tr("alerts.silence")}
                           </Button>
@@ -262,6 +286,35 @@ export function OpsAlerts() {
               </TableBody>
             </Table>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(silenceFor)} onOpenChange={(open) => !open && setSilenceFor(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{tr("alerts.silenceTitle")}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-1.5">
+            <Label className="text-xs">{tr("alerts.silenceHours")}</Label>
+            <Select value={silenceHours} onValueChange={setSilenceHours}>
+              <SelectTrigger className="h-9 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">1h</SelectItem>
+                <SelectItem value="4">4h</SelectItem>
+                <SelectItem value="24">24h</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSilenceFor(null)}>
+              {tr("common.cancel")}
+            </Button>
+            <Button onClick={() => void silence()} disabled={busy !== null}>
+              {tr("alerts.silenceConfirm")}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

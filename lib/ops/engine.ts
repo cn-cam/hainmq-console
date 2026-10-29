@@ -68,6 +68,7 @@ function findActiveAlert(rule: OpsRule, objectName: string): OpsAlert | null {
     ackBy: row.ack_by ? String(row.ack_by) : null,
     silencedUntil: row.silenced_until ? Number(row.silenced_until) : null,
     lastNotifiedAt: row.last_notified_at ? Number(row.last_notified_at) : null,
+    escalatedAt: row.escalated_at ? Number(row.escalated_at) : null,
   }
 }
 
@@ -135,14 +136,19 @@ function resolveAlert(alert: OpsAlert, rule: OpsRule) {
   })
 }
 
-function createNotifications(alertId: number, rule: OpsRule, event: "alert" | "recovery") {
-  if (!rule.channelIds.length) return
+function createNotifications(
+  alertId: number,
+  rule: OpsRule,
+  event: "alert" | "recovery",
+  channelIds: number[] = rule.channelIds,
+) {
+  if (!channelIds.length) return
   const db = getDb()
   const statement = db.prepare(
     `INSERT INTO ops_notifications (alert_id, channel_id, event, status, attempts, created_at)
      VALUES (?, ?, ?, 'pending', 0, ?)`,
   )
-  for (const channelId of rule.channelIds) {
+  for (const channelId of channelIds) {
     statement.run(alertId, channelId, event, now())
   }
 }
@@ -206,6 +212,25 @@ export function evaluateRules() {
               .prepare("UPDATE ops_alerts SET last_notified_at = ? WHERE id = ?")
               .run(now(), active.id)
             createNotifications(active.id, rule, "alert")
+          }
+
+          if (
+            rule.escalationChannelIds.length &&
+            !active.escalatedAt &&
+            !active.ackAt &&
+            (!active.silencedUntil || active.silencedUntil <= now()) &&
+            now() - active.startedAt >= rule.escalationAfterSec * 1000
+          ) {
+            createNotifications(active.id, rule, "alert", rule.escalationChannelIds)
+            getDb()
+              .prepare("UPDATE ops_alerts SET escalated_at = ? WHERE id = ?")
+              .run(now(), active.id)
+            insertAuditLog({
+              actor: "scheduler",
+              action: "alert.escalated",
+              target: active.objectName,
+              details: { ruleId: rule.id, channelIds: rule.escalationChannelIds },
+            })
           }
         }
       } else if (active) {

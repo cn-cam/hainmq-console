@@ -6,6 +6,15 @@ export type AlertStatus = "pending" | "firing" | "resolved"
 
 export type ChannelType = "email" | "webhook"
 
+export type WebhookPreset =
+  | "generic"
+  | "dingtalk"
+  | "feishu"
+  | "wecom"
+  | "slack"
+  | "teams"
+  | "telegram"
+
 export type RuleOperator = ">" | ">=" | "<" | "<=" | "==" | "!=" | "absent"
 
 export type ScopeType = "global" | "queue" | "exchange"
@@ -48,6 +57,8 @@ export interface OpsRule {
   severity: Severity
   enabled: boolean
   channelIds: number[]
+  escalationChannelIds: number[]
+  escalationAfterSec: number
   template: string | null
   cooldownSec: number
   createdAt: number
@@ -66,6 +77,8 @@ export interface OpsRuleInput {
   severity: Severity
   enabled?: boolean
   channelIds: number[]
+  escalationChannelIds?: number[]
+  escalationAfterSec?: number
   template?: string | null
   cooldownSec?: number
 }
@@ -93,6 +106,8 @@ export interface WebhookConfig {
   retries?: number
   secret?: string
   allowPrivate?: boolean
+  preset?: WebhookPreset
+  chatId?: string
 }
 
 export interface OpsChannel {
@@ -130,6 +145,7 @@ export interface OpsAlert {
   ackBy: string | null
   silencedUntil: number | null
   lastNotifiedAt: number | null
+  escalatedAt: number | null
 }
 
 export interface OpsNotification {
@@ -157,6 +173,8 @@ export interface OpsApproval {
   requestedAt: number
   decidedBy: string | null
   decidedAt: number | null
+  firstApprovedBy: string | null
+  firstApprovedAt: number | null
   executedAt: number | null
   result: string | null
   expiresAt: number
@@ -167,9 +185,12 @@ export interface OpsSettings {
   sampleRetentionDays: number
   alertRetentionDays: number
   notificationRetentionDays: number
+  auditRetentionDays: number
+  backupRetentionDays: number
   timezone: string
   webhookAllowPrivate: boolean
   chatEnabled: boolean
+  twoPersonApproval: boolean
   maintenanceUntil: number | null
 }
 

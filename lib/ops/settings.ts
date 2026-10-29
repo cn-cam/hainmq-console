@@ -14,9 +14,12 @@ export function getSettings(): OpsSettings {
     sampleRetentionDays: Math.max(1, toNumber(map.get("sample_retention_days"), 30)),
     alertRetentionDays: Math.max(1, toNumber(map.get("alert_retention_days"), 180)),
     notificationRetentionDays: Math.max(1, toNumber(map.get("notification_retention_days"), 90)),
+    auditRetentionDays: Math.max(1, toNumber(map.get("audit_retention_days"), 365)),
+    backupRetentionDays: Math.max(1, toNumber(map.get("backup_retention_days"), 7)),
     timezone: map.get("timezone") || "Asia/Shanghai",
     webhookAllowPrivate: map.get("webhook_allow_private") === "true",
     chatEnabled: map.get("chat_enabled") !== "false",
+    twoPersonApproval: map.get("two_person_approval") === "true",
     maintenanceUntil: Math.max(0, toNumber(map.get("maintenance_until"), 0)) || null,
   }
 }
@@ -32,9 +35,12 @@ export function updateSettings(patch: Partial<OpsSettings>): OpsSettings {
   if (patch.sampleRetentionDays !== undefined) values.sample_retention_days = String(patch.sampleRetentionDays)
   if (patch.alertRetentionDays !== undefined) values.alert_retention_days = String(patch.alertRetentionDays)
   if (patch.notificationRetentionDays !== undefined) values.notification_retention_days = String(patch.notificationRetentionDays)
+  if (patch.auditRetentionDays !== undefined) values.audit_retention_days = String(patch.auditRetentionDays)
+  if (patch.backupRetentionDays !== undefined) values.backup_retention_days = String(patch.backupRetentionDays)
   if (patch.timezone !== undefined) values.timezone = patch.timezone
   if (patch.webhookAllowPrivate !== undefined) values.webhook_allow_private = String(patch.webhookAllowPrivate)
   if (patch.chatEnabled !== undefined) values.chat_enabled = String(patch.chatEnabled)
+  if (patch.twoPersonApproval !== undefined) values.two_person_approval = String(patch.twoPersonApproval)
   if (patch.maintenanceUntil !== undefined) values.maintenance_until = String(patch.maintenanceUntil ?? 0)
 
   for (const [key, value] of Object.entries(values)) {

@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "node:crypto"
 import { getSessionFromCookie } from "@/lib/auth/session"
 import type { AuthSession } from "@/lib/rabbitmq/types"
+import { getLocalRole } from "./store"
 import type { OpsRole, OpsUser } from "./types"
 
 export class OpsHttpError extends Error {
@@ -31,6 +32,16 @@ function adminAllowlist(): string[] {
 export async function getOpsUser(): Promise<(OpsUser & { session: AuthSession }) | null> {
   const session = await getSessionFromCookie()
   if (!session) return null
+
+  const localRole = getLocalRole(session.user.username)
+  if (localRole) {
+    return {
+      role: localRole.role,
+      username: session.user.username,
+      isAdmin: localRole.role === "admin",
+      session,
+    }
+  }
 
   const tags = session.user.tags.map((tag) => tag.toLowerCase())
   let role: OpsRole | null = null

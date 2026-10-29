@@ -48,6 +48,8 @@ type RuleForm = {
   severity: OpsRule["severity"]
   enabled: boolean
   channelIds: number[]
+  escalationChannelIds: number[]
+  escalationAfterSec: number
   template: string
   cooldownSec: number
 }
@@ -64,6 +66,8 @@ const EMPTY_FORM: RuleForm = {
   severity: "warning",
   enabled: true,
   channelIds: [],
+  escalationChannelIds: [],
+  escalationAfterSec: 300,
   template: "",
   cooldownSec: 900,
 }
@@ -124,6 +128,8 @@ export function OpsRules() {
       severity: rule.severity,
       enabled: rule.enabled,
       channelIds: rule.channelIds,
+      escalationChannelIds: rule.escalationChannelIds,
+      escalationAfterSec: rule.escalationAfterSec,
       template: rule.template || "",
       cooldownSec: rule.cooldownSec,
     })
@@ -151,6 +157,7 @@ export function OpsRules() {
         threshold: Number(form.threshold),
         durationSec: Number(form.durationSec),
         cooldownSec: Number(form.cooldownSec),
+        escalationAfterSec: Number(form.escalationAfterSec),
         template: form.template || null,
       }
       if (editing) {
@@ -448,6 +455,53 @@ export function OpsRules() {
                   })
                 )}
               </div>
+            </div>
+
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label className="text-xs">{tr("rules.escalationChannels")}</Label>
+              <div className="flex flex-wrap gap-2 rounded-lg border p-3">
+                {!channels.length ? (
+                  <span className="text-xs text-muted-foreground">{tr("channels.empty")}</span>
+                ) : (
+                  channels.map((channel) => {
+                    const selected = form.escalationChannelIds.includes(channel.id)
+                    return (
+                      <button
+                        key={channel.id}
+                        type="button"
+                        onClick={() =>
+                          setForm({
+                            ...form,
+                            escalationChannelIds: selected
+                              ? form.escalationChannelIds.filter((id) => id !== channel.id)
+                              : [...form.escalationChannelIds, channel.id],
+                          })
+                        }
+                        className={`rounded-md border px-2 py-1 text-xs ${
+                          selected
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "text-muted-foreground"
+                        }`}
+                      >
+                        {channel.name}
+                      </button>
+                    )
+                  })
+                )}
+              </div>
+              <p className="text-[10px] text-muted-foreground">{tr("rules.escalationHelp")}</p>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs">{tr("rules.escalationAfter")}</Label>
+              <Input
+                type="number"
+                value={form.escalationAfterSec}
+                onChange={(event) =>
+                  setForm({ ...form, escalationAfterSec: Number(event.target.value) })
+                }
+                className="h-9 font-mono text-sm"
+              />
             </div>
 
             <div className="space-y-1.5 sm:col-span-2">

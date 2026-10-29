@@ -304,6 +304,10 @@ export function QueueDrawer({ queue, open, onOpenChange, onChanged }: QueueDrawe
         vhost={q.vhost}
         readyCount={q.messages_ready ?? 0}
         unackedCount={q.messages_unacknowledged ?? 0}
+        onChanged={() => {
+          refresh()
+          onChanged?.()
+        }}
       />
 
       <PublishDialog

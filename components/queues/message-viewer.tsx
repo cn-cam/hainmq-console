@@ -2,12 +2,14 @@
 
 import * as React from "react"
 import {
+  ArrowRightLeft,
   Check,
   Copy,
   Download,
   Inbox,
   Loader2,
   RefreshCw,
+  Search,
 } from "lucide-react"
 import {
   Dialog,
@@ -25,6 +27,7 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
@@ -36,6 +39,7 @@ import { SortButton, useSort } from "@/components/shared/table-utils"
 import { useT } from "@/lib/i18n/client"
 import { formatBytes, cn } from "@/lib/utils"
 import type { QueueMessage } from "@/lib/rabbitmq/types"
+import { MoveMessagesDialog } from "./move-messages-dialog"
 
 interface MessageViewerProps {
   open: boolean
@@ -44,6 +48,7 @@ interface MessageViewerProps {
   vhost: string
   readyCount: number
   unackedCount: number
+  onChanged?: () => void
 }
 
 type IndexedMessage = QueueMessage & { _index: number }
@@ -91,6 +96,7 @@ function MessageViewerInner({
   vhost,
   readyCount,
   unackedCount,
+  onChanged,
 }: MessageViewerProps) {
   const t = useT()
   const [messages, setMessages] = React.useState<IndexedMessage[]>([])
@@ -99,6 +105,8 @@ function MessageViewerInner({
   const [error, setError] = React.useState<string | null>(null)
   const [selected, setSelected] = React.useState<IndexedMessage | null>(null)
   const [copied, setCopied] = React.useState(false)
+  const [search, setSearch] = React.useState("")
+  const [moveOpen, setMoveOpen] = React.useState(false)
   const { sortKey, sortDir, toggle, compare } = useSort<SortKey>("_index")
 
   // Monotonic request token: a newer load invalidates every state update
@@ -171,10 +179,18 @@ function MessageViewerInner({
     }
   }, [load])
 
-  const sorted = React.useMemo(
-    () => [...messages].sort((a, b) => compare(a[sortKey], b[sortKey])),
-    [messages, sortKey, compare],
-  )
+  const sorted = React.useMemo(() => {
+    const list = [...messages].sort((a, b) => compare(a[sortKey], b[sortKey]))
+    const query = search.trim().toLowerCase()
+    if (!query) return list
+    return list.filter((message) => {
+      return (
+        message.routing_key?.toLowerCase().includes(query) ||
+        message.payload?.toLowerCase().includes(query) ||
+        message.properties?.message_id?.toLowerCase().includes(query)
+      )
+    })
+  }, [messages, sortKey, compare, search])
 
   const hasTimestamps = messages.some((m) => m.properties?.timestamp != null)
 
@@ -203,8 +219,9 @@ function MessageViewerInner({
     : []
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex h-[85vh] max-w-[92vw] flex-col gap-0 p-0 xl:max-w-6xl">
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="flex h-[85vh] max-w-[92vw] flex-col gap-0 p-0 xl:max-w-6xl">
         <DialogHeader className="shrink-0 border-b px-5 pb-3 pt-5">
           <DialogTitle className="flex items-center gap-2 text-base">
             {t("messages.title", { queue: queueName })}
@@ -220,6 +237,15 @@ function MessageViewerInner({
               {t("messages.peekNote")}
             </span>
             <span className="ml-auto flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 gap-1.5 text-xs"
+                onClick={() => setMoveOpen(true)}
+              >
+                <ArrowRightLeft className="h-3.5 w-3.5" />
+                {t("messages.move")}
+              </Button>
               <Select
                 value={String(peek)}
                 onValueChange={(v) => {
@@ -256,6 +282,17 @@ function MessageViewerInner({
         <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-2">
           {/* Message list */}
           <div className="flex min-h-0 flex-col overflow-hidden border-b md:border-b-0 md:border-r">
+            <div className="border-b p-2">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder={t("messages.searchPlaceholder")}
+                  className="h-8 pl-8 text-xs"
+                />
+              </div>
+            </div>
             <div className="min-h-0 flex-1 overflow-auto">
               <Table>
                 <TableHeader>
@@ -409,6 +446,18 @@ function MessageViewerInner({
           </div>
         </div>
       </DialogContent>
-    </Dialog>
+      </Dialog>
+      <MoveMessagesDialog
+        open={moveOpen}
+        onOpenChange={setMoveOpen}
+        queueName={queueName}
+        vhost={vhost}
+        readyCount={readyCount}
+        onMoved={() => {
+          fetchMessages(peek)
+          onChanged?.()
+        }}
+      />
+    </>
   )
 }

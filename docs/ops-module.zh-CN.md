@@ -351,22 +351,25 @@ export OPS_MCP_TOKEN="你的 token"
 
 SQLite 文件位于 Docker 卷 `hainmq-data` 的 `/app/data/ops.db`。
 
-备份：
+在 `/ops/backups` 可以：
+
+- 立即创建一致性备份（`VACUUM INTO`）
+- 下载或删除备份
+- 将备份标记为待恢复，然后重启容器生效
+- 按 `OPS_BACKUP_RETENTION_DAYS` 自动清理旧备份
+
+调度器默认每 24 小时自动备份一次。恢复流程：
+
+```bash
+docker compose restart hainmq-console
+```
+
+恢复前会在数据库旁保留一份 `ops.db.pre-restore-*` 安全副本。也可以手动备份：
 
 ```bash
 docker run --rm -v hainmq-data:/data -v ${PWD}:/backup alpine \
   cp /data/ops.db /backup/ops.db
 ```
-
-恢复：
-
-```bash
-docker compose stop hainmq-console
-# 将备份文件放回卷中的 /app/data/ops.db
-docker compose start hainmq-console
-```
-
-建议在停止应用或低峰期备份。
 
 ## 12. 常见问题
 
@@ -401,3 +404,33 @@ docker compose start hainmq-console
 ### 应用停止期间会告警吗
 
 不会。当前架构是单进程内调度，应用停止期间不采集、不告警。启动后会恢复采集。
+
+## 13. 审计、角色与双人审批
+
+- `/ops/audit` 查询写操作、审批、配置变更和调度事件，可按操作人、动作、对象和时间筛选，并导出 CSV。
+- `/ops/roles` 为 RabbitMQ 用户名设置本地运维角色（viewer / operator / admin）；没有本地覆盖的用户继续按 RabbitMQ tag 继承。
+- 开启“双人审批”后，写操作需要两位不同操作人审批：第一位记录初审，第二位批准后才执行。可在 `/ops/settings` 或 `OPS_TWO_PERSON_APPROVAL=true` 开启。
+
+## 14. Prometheus 指标
+
+`GET /api/metrics` 输出 Prometheus 文本格式，包括：
+
+- `hainmq_target_up`
+- `hainmq_queue_messages` / `hainmq_queue_ready` / `hainmq_queue_unacked`
+- `hainmq_node_memory_alarm` / `hainmq_node_disk_alarm`
+- `hainmq_alert_active`
+- 通用 `hainmq_metric`
+
+默认允许内网无认证抓取；设置 `OPS_METRICS_TOKEN` 后需携带 `Authorization: Bearer <token>`。
+
+## 15. 消息移动与 DLQ 重放
+
+在队列详情打开消息查看器，点击“移动消息”：
+
+- 目标可以是队列或交换机
+- 可指定数量、交换机路由键
+- 队列名以 `.dlq` 结尾时默认填入去掉后缀的队列名
+- 消息先从源队列取出，发布失败时尝试退回源队列
+- 建议先用小数量验证目标绑定和路由
+
+历史指标超过保留期后会按小时降采样到 `ops_samples_rollup`，保留 365 天。

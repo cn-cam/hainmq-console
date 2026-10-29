@@ -208,6 +208,50 @@ async function assertSafeWebhookUrl(url: string, allowPrivate: boolean): Promise
   }
 }
 
+function webhookBody(config: WebhookConfig, payload: AlertPayload): string {
+  if (config.bodyTemplate) return renderTemplate(config.bodyTemplate, payload)
+
+  const text = `${payload.title}\n${payload.message}\n${payload.target} / ${payload.objectName}`
+  switch (config.preset) {
+    case "dingtalk":
+      return JSON.stringify({
+        msgtype: "markdown",
+        markdown: { title: payload.title, text: `### ${payload.title}\n\n${payload.message}` },
+      })
+    case "feishu":
+      return JSON.stringify({ msg_type: "text", content: { text } })
+    case "wecom":
+      return JSON.stringify({
+        msgtype: "markdown",
+        markdown: { content: `**${payload.title}**\n${payload.message}` },
+      })
+    case "slack":
+      return JSON.stringify({ text: `*${payload.title}*\n${payload.message}` })
+    case "teams":
+      return JSON.stringify({
+        "@type": "MessageCard",
+        "@context": "http://schema.org/extensions",
+        summary: payload.title,
+        themeColor:
+          payload.severity === "critical"
+            ? "D93025"
+            : payload.severity === "warning"
+              ? "F9AB00"
+              : "1A73E8",
+        sections: [{ activityTitle: payload.title, text: payload.message }],
+      })
+    case "telegram":
+      if (!config.chatId) throw new Error("Telegram chatId is required")
+      return JSON.stringify({
+        chat_id: config.chatId,
+        text,
+        disable_web_page_preview: true,
+      })
+    default:
+      return JSON.stringify(renderPayloadObject(payload))
+  }
+}
+
 export async function sendWebhook(
   config: WebhookConfig,
   payload: AlertPayload,
@@ -215,9 +259,7 @@ export async function sendWebhook(
 ): Promise<string> {
   await assertSafeWebhookUrl(config.url, config.allowPrivate ?? defaultAllowPrivate)
 
-  const body = config.bodyTemplate
-    ? renderTemplate(config.bodyTemplate, payload)
-    : JSON.stringify(renderPayloadObject(payload))
+  const body = webhookBody(config, payload)
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",

@@ -21,7 +21,7 @@ RabbitMQ is a trademark of its respective owner. This project is not affiliated 
 
 **Dashboard** — Real-time overview with canvas-rendered streaming charts, adjustable time ranges (Live / 10m / 1h / 8h / 24h backed by the broker's own sample history), queue distribution, cluster health with memory/disk alarms, and animated stats.
 
-**Queues** — Create (classic, quorum, stream), inspect, and delete queues. A detail drawer shows per-queue rate history, consumers, and arguments. Peek messages with pagination and sorting, publish test messages with custom headers, purge with confirmation, delete with type-to-confirm.
+**Queues** — Create (classic, quorum, stream), inspect, and delete queues. A detail drawer shows per-queue rate history, consumers, and arguments. Peek, filter, download, publish, purge, and move messages to another queue or exchange — including DLQ replay — with confirmation.
 
 **Exchanges** — Declare and delete exchanges, inspect bindings, and add new bindings to queues.
 
@@ -31,7 +31,7 @@ RabbitMQ is a trademark of its respective owner. This project is not affiliated 
 
 **Internationalization** — English and Simplified Chinese UI. English is the default; switch languages from the login page or the dashboard header. The choice is stored in a cookie.
 
-**Operations** — Built-in monitoring for broker health, queues, messages, connections, and channels. Alert rules, multiple email/Webhook channels, an MCP server for local opencode, write approvals, and a model-assisted chat page. Uses embedded SQLite and an in-process scheduler; no PostgreSQL or extra worker container. See [the operations guide](docs/ops-module.zh-CN.md).
+**Operations** — Built-in monitoring for broker health, queues, messages, connections, and channels. Alert rules, email/Webhook channels with DingTalk/Feishu/WeCom/Slack/Teams/Telegram presets, escalation channels, silence and maintenance windows, audit log export, local role overrides, two-person approval, MCP automation, and model-assisted chat. Uses embedded SQLite and an in-process scheduler; no PostgreSQL or extra worker container. See [the operations guide](docs/ops-module.zh-CN.md).
 
 **Command palette** — `Ctrl/⌘ K` to jump to any page or queue, toggle the theme, or pause live updates.
 
@@ -42,6 +42,10 @@ RabbitMQ is a trademark of its respective owner. This project is not affiliated 
 **Administration** — Manage virtual hosts, users, permissions, policies, nodes and feature flags, and import/export RabbitMQ definitions. RabbitMQ's own permissions still apply.
 
 **Multi-cluster** — Configure multiple RabbitMQ Management endpoints with `RABBITMQ_CLUSTERS`; choose a cluster at login and switch from the header. Credentials are validated against the selected cluster and remain pass-through.
+
+**Observability** — Prometheus-compatible `GET /api/metrics` with per-target, queue, node-alarm, and active-alert series. Optionally protect it with `OPS_METRICS_TOKEN`.
+
+**Reliability** — SQLite WAL, daily backups, staged one-click restore, hourly downsampling of expired samples, configurable retention, startup integrity check, and graceful shutdown.
 
 **Theming** — Dark and light mode with a refined, minimal UI. Fully responsive, down to mobile.
 
@@ -197,6 +201,10 @@ The image runs as a non-root user and includes a container `HEALTHCHECK` against
 | `OPS_ADMIN_USERS` | `administrator` | Comma-separated RabbitMQ usernames allowed to administer ops; empty means all administrators |
 | `OPS_WEBHOOK_ALLOW_PRIVATE` | `false` | Allow Webhooks to target private network addresses |
 | `OPS_CHAT_ENABLED` | `true` | Enable the operations chat page; can also be toggled in Settings |
+| `OPS_TWO_PERSON_APPROVAL` | `false` | Require two different operators to approve write operations |
+| `OPS_AUDIT_RETENTION_DAYS` | `365` | Audit log retention |
+| `OPS_BACKUP_RETENTION_DAYS` | `7` | SQLite backup retention |
+| `OPS_METRICS_TOKEN` | — | Optional bearer token for `GET /api/metrics`; empty allows unauthenticated scrapes |
 | `OPS_DB_PATH` | `/app/data/ops.db` | Embedded SQLite database path |
 
 See [.env.ops.example](.env.ops.example) for a complete template.

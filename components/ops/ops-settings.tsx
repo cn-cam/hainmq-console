@@ -148,6 +148,28 @@ export function OpsSettingsForm() {
               />
             </div>
             <div className="space-y-1.5">
+              <Label className="text-xs">{tr("settings.auditRetention")}</Label>
+              <Input
+                type="number"
+                value={settings.auditRetentionDays}
+                onChange={(event) =>
+                  setSettings({ ...settings, auditRetentionDays: Number(event.target.value) })
+                }
+                className="h-9 font-mono text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">{tr("settings.backupRetention")}</Label>
+              <Input
+                type="number"
+                value={settings.backupRetentionDays}
+                onChange={(event) =>
+                  setSettings({ ...settings, backupRetentionDays: Number(event.target.value) })
+                }
+                className="h-9 font-mono text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
               <Label className="text-xs">{tr("settings.maintenanceUntil")}</Label>
               <Input
                 type="datetime-local"
@@ -179,6 +201,21 @@ export function OpsSettingsForm() {
             <Switch
               checked={settings.chatEnabled}
               onCheckedChange={(chatEnabled) => setSettings({ ...settings, chatEnabled })}
+            />
+          </div>
+
+          <div className="flex items-center justify-between rounded-lg border px-3 py-2">
+            <div>
+              <span className="text-sm">{tr("settings.twoPersonApproval")}</span>
+              <p className="text-[11px] text-muted-foreground">
+                {tr("settings.twoPersonApprovalHint")}
+              </p>
+            </div>
+            <Switch
+              checked={settings.twoPersonApproval}
+              onCheckedChange={(twoPersonApproval) =>
+                setSettings({ ...settings, twoPersonApproval })
+              }
             />
           </div>
 

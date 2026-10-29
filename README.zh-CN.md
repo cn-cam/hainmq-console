@@ -21,7 +21,7 @@ RabbitMQ 是其各自权利人的商标。本项目与 RabbitMQ 项目及其商�
 
 **仪表盘** — 实时概览，包含基于 Canvas 的流式图表、可调时间范围（实时 / 10 分钟 / 1 小时 / 8 小时 / 24 小时，使用 Broker 自身保留的采样数据）、队列分布、带内存/磁盘告警的集群健康状态，以及动态统计。
 
-**队列** — 创建（classic、quorum、stream）、查看和删除队列。详情抽屉展示每个队列的速率历史、消费者和参数。支持分页和排序查看消息、发布带自定义消息头的测试消息、确认后清空队列，以及输入队列名确认删除。
+**队列** — 创建（classic、quorum、stream）、查看和删除队列。详情抽屉展示每个队列的速率历史、消费者和参数。支持分页、筛选、下载消息，发布测试消息，清空队列，以及将消息移动/重放到其他队列或交换机（含 DLQ 重放）。
 
 **交换机** — 声明和删除交换机、查看绑定，并向队列添加新绑定。
 
@@ -31,7 +31,7 @@ RabbitMQ 是其各自权利人的商标。本项目与 RabbitMQ 项目及其商�
 
 **多语言** — 支持英文和简体中文界面。默认英文，可在登录页或仪表盘右上角切换语言，选择结果保存在 cookie 中。
 
-**运维模块** — 内置 Broker 健康、队列、消息、连接和通道监控。支持告警规则、多个邮件/Webhook 通道、MCP（本地 opencode）、写操作审批和模型辅助对话。使用嵌入式 SQLite 和进程内调度，不引入 PostgreSQL 或独立 Worker。详见 [运维模块配置指南](docs/ops-module.zh-CN.md)。
+**运维模块** — 内置 Broker 健康、队列、消息、连接和通道监控。支持告警规则、邮件/Webhook 通道（钉钉/飞书/企微/Slack/Teams/Telegram 预设）、升级通道、静默与维护窗口、审计日志导出、本地角色覆盖、双人审批、MCP（本地 opencode）和模型辅助对话。使用嵌入式 SQLite 和进程内调度，不引入 PostgreSQL 或独立 Worker。详见 [运维模块配置指南](docs/ops-module.zh-CN.md)。
 
 **命令面板** — 使用 `Ctrl/⌘ K` 跳转到任意页面或队列、切换主题或暂停实时更新。
 
@@ -42,6 +42,10 @@ RabbitMQ 是其各自权利人的商标。本项目与 RabbitMQ 项目及其商�
 **管理** — 管理虚拟主机、用户、权限、策略、节点和特性开关，支持 RabbitMQ definitions 导入导出。仍遵循 RabbitMQ 自身的权限体系。
 
 **多集群** — 通过 `RABBITMQ_CLUSTERS` 配置多个 RabbitMQ Management 端点；登录时选择集群，登录后可在顶栏切换。凭据仍为透传认证，并会针对所选集群重新校验。
+
+**可观测性** — 提供 Prometheus 兼容的 `GET /api/metrics`，包含目标、队列、节点告警和活动告警指标；可用 `OPS_METRICS_TOKEN` 保护。
+
+**可靠性** — SQLite WAL、每日备份、暂存式一键恢复、过期样本按小时降采样、可配置保留策略、启动完整性检查和优雅停机。
 
 **主题** — 深色和浅色模式，界面简洁，完整响应式，支持移动端。
 
@@ -197,6 +201,10 @@ docker run -d --name hainmq-console \
 | `OPS_ADMIN_USERS` | `administrator` | 允许管理运维模块的 RabbitMQ 用户名，逗号分隔；留空表示所有管理员 |
 | `OPS_WEBHOOK_ALLOW_PRIVATE` | `false` | 是否允许 Webhook 访问内网地址 |
 | `OPS_CHAT_ENABLED` | `true` | 是否启用运维对话；也可在设置页切换 |
+| `OPS_TWO_PERSON_APPROVAL` | `false` | 是否要求两位不同操作人审批写操作 |
+| `OPS_AUDIT_RETENTION_DAYS` | `365` | 审计日志保留天数 |
+| `OPS_BACKUP_RETENTION_DAYS` | `7` | SQLite 备份保留天数 |
+| `OPS_METRICS_TOKEN` | — | `GET /api/metrics` 的可选 Bearer Token；留空允许无认证抓取 |
 | `OPS_DB_PATH` | `/app/data/ops.db` | 嵌入式 SQLite 数据库路径 |
 
 完整模板见 [.env.ops.example](.env.ops.example)。

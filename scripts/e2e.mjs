@@ -8,12 +8,22 @@
 // #21 (time-range samples), and #23 (whoami tags array vs string).
 
 import { spawn, execSync } from 'node:child_process'
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
 
 const MOCK4_PORT = 15774
 const MOCK38_PORT = 15773
 const APP_PORT = 3199
 const APP = `http://localhost:${APP_PORT}`
+const OPS_TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'hainmq-e2e-'))
+const OPS_ENV = {
+  OPS_DB_PATH: path.join(OPS_TMP, 'ops.db'),
+  OPS_ENCRYPTION_KEY: Buffer.alloc(32, 1).toString('base64'),
+  OPS_ADMIN_USERS: 'admin',
+  OPS_MCP_TOKEN: 'e2e-mcp-token',
+}
 
 const procs = []
 let passed = 0
@@ -74,6 +84,7 @@ async function main() {
       { id: 'main', name: 'Main', host: 'localhost', port: String(MOCK4_PORT), protocol: 'http' },
       { id: 'legacy', name: 'Legacy', host: 'localhost', port: String(MOCK38_PORT), protocol: 'http' },
     ]),
+    ...OPS_ENV,
   })
 
   await waitFor(`http://localhost:${MOCK4_PORT}/api/whoami`)
@@ -310,6 +321,241 @@ async function main() {
     check('user delete', userRemove.ok)
   }
   {
+    const res = await authed('/api/messages/move', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        vhost: '/',
+        sourceQueue: 'emails.dlq',
+        targetType: 'queue',
+        target: 'emails.outbound',
+        count: 2,
+      }),
+    })
+    const body = await res.json()
+    check(
+      'message move to queue',
+      res.status === 200 && body?.moved === 2 && body?.failed === 0,
+      JSON.stringify(body),
+    )
+  }
+
+  console.log('\nOperations hardening')
+  {
+    const res = await authed('/api/ops/me')
+    const body = await res.json()
+    check('ops me includes two-person setting', typeof body?.twoPersonApproval === 'boolean')
+  }
+  {
+    const res = await authed('/api/ops/audit')
+    const body = await res.json()
+    check('ops audit list', res.status === 200 && Array.isArray(body), `${res.status} ${JSON.stringify(body)}`)
+    const csv = await authed('/api/ops/audit?format=csv')
+    check(
+      'ops audit CSV export',
+      csv.status === 200 && (csv.headers.get('content-type') ?? '').includes('text/csv'),
+      `${csv.status} ${csv.headers.get('content-type')}`,
+    )
+  }
+  {
+    const create = await authed('/api/ops/backups', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    })
+    const backup = await create.json()
+    check('ops backup create', create.status === 201 && Boolean(backup?.name), `${create.status} ${JSON.stringify(backup)}`)
+
+    const list = await authed('/api/ops/backups')
+    const backups = await list.json()
+    check('ops backup list', Array.isArray(backups) && backups.length > 0)
+
+    if (backup?.name) {
+      const download = await authed(
+        `/api/ops/backups/${encodeURIComponent(backup.name)}/download`,
+      )
+      check(
+        'ops backup download',
+        download.status === 200 &&
+          (download.headers.get('content-type') ?? '').includes('sqlite'),
+      )
+      const remove = await authed(`/api/ops/backups/${encodeURIComponent(backup.name)}`, {
+        method: 'DELETE',
+      })
+      check('ops backup delete', remove.ok)
+    }
+  }
+  {
+    const set = await authed('/api/ops/local-users/e2e-role', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role: 'viewer' }),
+    })
+    check('ops local role set', set.ok, `${set.status} ${await set.clone().text()}`)
+    const list = await authed('/api/ops/local-users')
+    const roles = await list.json()
+    check(
+      'ops local role list',
+      Array.isArray(roles) && roles.some((item) => item.username === 'e2e-role'),
+    )
+    const remove = await authed('/api/ops/local-users/e2e-role', { method: 'DELETE' })
+    check('ops local role delete', remove.ok)
+  }
+  {
+    const set = await authed('/api/ops/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ twoPersonApproval: true }),
+    })
+    const settings = await set.json()
+    check('ops two-person setting', settings?.twoPersonApproval === true, `${set.status} ${JSON.stringify(settings)}`)
+    await authed('/api/ops/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ twoPersonApproval: false }),
+    })
+  }
+  {
+    const targetRes = await authed('/api/ops/targets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: 'E2E target',
+        host: 'localhost',
+        port: String(MOCK4_PORT),
+        protocol: 'http',
+        vhost: null,
+        username: 'admin',
+        password: 'admin',
+        enabled: true,
+      }),
+    })
+    const target = await targetRes.json()
+    check('ops target create for approvals', targetRes.status === 201 && Boolean(target?.id), JSON.stringify(target))
+
+    const channelRes = await authed('/api/ops/channels', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: 'E2E Slack',
+        type: 'webhook',
+        enabled: true,
+        config: {
+          url: 'https://example.com/hook',
+          preset: 'slack',
+          method: 'POST',
+          headers: {},
+          timeoutMs: 10000,
+          retries: 0,
+          allowPrivate: false,
+        },
+      }),
+    })
+    const channel = await channelRes.json()
+    check('ops webhook preset create', channelRes.status === 201 && channel?.config?.preset === 'slack', JSON.stringify(channel))
+
+    const ruleRes = await authed('/api/ops/rules', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: 'E2E escalation rule',
+        targetId: target?.id,
+        scopeType: 'global',
+        scopeValue: '*',
+        metric: 'service.reachable',
+        operator: '<',
+        threshold: 1,
+        durationSec: 0,
+        severity: 'warning',
+        enabled: true,
+        channelIds: channel?.id ? [channel.id] : [],
+        escalationChannelIds: channel?.id ? [channel.id] : [],
+        escalationAfterSec: 60,
+        cooldownSec: 900,
+      }),
+    })
+    const rule = await ruleRes.json()
+    check(
+      'ops rule escalation fields',
+      ruleRes.status === 201 && rule?.escalationAfterSec === 60 && rule?.escalationChannelIds?.length === 1,
+      JSON.stringify(rule),
+    )
+
+    await authed('/api/ops/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ twoPersonApproval: true }),
+    })
+    await authed('/api/ops/local-users/monitor', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role: 'operator' }),
+    })
+
+    const mcpRes = await fetch(`${APP}/api/ops/mcp`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer e2e-mcp-token',
+      },
+      body: JSON.stringify({
+        tool: 'mq_create_queue',
+        arguments: { target_id: target?.id, vhost: '/', name: 'e2e-approval' },
+      }),
+    })
+    const mcpBody = await mcpRes.json()
+    const approvalId = mcpBody?.result?.approvalId
+    check('MCP creates write approval', mcpRes.status === 200 && Boolean(approvalId), JSON.stringify(mcpBody))
+
+    if (approvalId) {
+      const monitorLogin = await login('monitor', 'monitor')
+      const monitorCookie = monitorLogin.cookie.split(';')[0]
+      const first = await fetch(`${APP}/api/ops/approvals/${approvalId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', cookie: monitorCookie },
+        body: JSON.stringify({ action: 'approve' }),
+      })
+      const firstBody = await first.json()
+      check(
+        'two-person first approval waits',
+        first.status === 200 && firstBody?.result?.pending === true,
+        JSON.stringify(firstBody),
+      )
+
+      const second = await authed(`/api/ops/approvals/${approvalId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'approve' }),
+      })
+      const secondBody = await second.json()
+      check(
+        'two-person second approval executes',
+        second.status === 200 && secondBody?.result?.ok === true,
+        JSON.stringify(secondBody),
+      )
+    }
+
+    await authed('/api/ops/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ twoPersonApproval: false }),
+    })
+    await authed('/api/ops/local-users/monitor', { method: 'DELETE' })
+    if (rule?.id) await authed(`/api/ops/rules/${rule.id}`, { method: 'DELETE' })
+    if (channel?.id) await authed(`/api/ops/channels/${channel.id}`, { method: 'DELETE' })
+    if (target?.id) await authed(`/api/ops/targets/${target.id}`, { method: 'DELETE' })
+  }
+  {
+    const res = await fetch(`${APP}/api/metrics`)
+    const text = await res.text()
+    check(
+      'Prometheus metrics endpoint',
+      res.status === 200 &&
+        (res.headers.get('content-type') ?? '').includes('text/plain') &&
+        text.includes('hainmq_'),
+    )
+  }
+  {
     const res = await authed('/api/rabbitmq/connections')
     const body = await res.json()
     const named = Array.isArray(body) && body.find((c) => c.client_properties?.connection_name)
@@ -363,6 +609,7 @@ async function main() {
       RABBITMQ_HOST: 'localhost',
       RABBITMQ_PORT: String(MOCK38_PORT),
       RABBITMQ_PROTOCOL: 'http',
+      ...OPS_ENV,
     })
     await waitFor(`http://localhost:${APP_PORT + 1}/api/health`)
     const res = await fetch(`http://localhost:${APP_PORT + 1}/api/auth/login`, {
@@ -391,7 +638,7 @@ main()
     for (const p of procs) {
       try {
         if (process.platform === 'win32') {
-          // Kill the whole tree — shell-spawned children outlive p.kill()
+          // Kill the whole tree �� shell-spawned children outlive p.kill()
           execSync(`taskkill /pid ${p.pid} /T /F`, { stdio: 'ignore' })
         } else {
           p.kill()
@@ -400,5 +647,6 @@ main()
         // already gone
       }
     }
+    fs.rmSync(OPS_TMP, { recursive: true, force: true })
     setTimeout(() => process.exit(process.exitCode ?? 0), 500)
   })

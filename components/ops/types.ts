@@ -30,4 +30,5 @@ export interface OpsMe {
   role: "admin" | "operator" | "viewer"
   username: string
   isAdmin: boolean
+  twoPersonApproval: boolean
 }

@@ -9,15 +9,54 @@ export function getDb(): DatabaseSync {
 
   const file = process.env.OPS_DB_PATH || path.join(process.cwd(), "data", "ops.db")
   fs.mkdirSync(path.dirname(file), { recursive: true })
+  applyPendingRestore(file)
 
   const db = new DatabaseSync(file)
   db.exec("PRAGMA journal_mode = WAL")
+  db.exec("PRAGMA synchronous = NORMAL")
   db.exec("PRAGMA foreign_keys = ON")
   db.exec("PRAGMA busy_timeout = 5000")
+  db.exec("PRAGMA wal_autocheckpoint = 1000")
   initSchema(db)
   seedSettings(db)
+
+  try {
+    const check = db.prepare("PRAGMA quick_check").get() as { quick_check?: string } | undefined
+    if (check?.quick_check && check.quick_check !== "ok") {
+      console.error("[ops] SQLite quick_check failed:", check.quick_check)
+    }
+  } catch (error) {
+    console.error("[ops] SQLite quick_check error", error)
+  }
+
   database = db
   return db
+}
+
+export function closeDb() {
+  if (!database) return
+  try {
+    database.close()
+  } finally {
+    database = null
+  }
+}
+
+function applyPendingRestore(file: string) {
+  const pending = `${file}.restore-pending`
+  if (!fs.existsSync(pending)) return
+
+  const safety = `${file}.pre-restore-${Date.now()}`
+  if (fs.existsSync(file)) fs.copyFileSync(file, safety)
+  fs.copyFileSync(pending, file)
+  for (const suffix of ["-wal", "-shm"]) {
+    try {
+      fs.unlinkSync(`${file}${suffix}`)
+    } catch {
+      // Ignore missing sidecar files.
+    }
+  }
+  fs.unlinkSync(pending)
 }
 
 function initSchema(db: DatabaseSync) {
@@ -55,6 +94,19 @@ function initSchema(db: DatabaseSync) {
     CREATE INDEX IF NOT EXISTS idx_ops_samples_time
       ON ops_samples(ts);
 
+    CREATE TABLE IF NOT EXISTS ops_samples_rollup (
+      target_id INTEGER NOT NULL,
+      object_type TEXT NOT NULL,
+      object_name TEXT NOT NULL,
+      metric TEXT NOT NULL,
+      bucket_ts INTEGER NOT NULL,
+      value REAL NOT NULL,
+      samples INTEGER NOT NULL,
+      PRIMARY KEY (target_id, object_type, object_name, metric, bucket_ts)
+    );
+    CREATE INDEX IF NOT EXISTS idx_ops_samples_rollup_time
+      ON ops_samples_rollup(bucket_ts);
+
     CREATE TABLE IF NOT EXISTS ops_rules (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
@@ -68,6 +120,8 @@ function initSchema(db: DatabaseSync) {
       severity TEXT NOT NULL DEFAULT 'warning',
       enabled INTEGER NOT NULL DEFAULT 1,
       channel_ids TEXT NOT NULL DEFAULT '[]',
+      escalation_channel_ids TEXT NOT NULL DEFAULT '[]',
+      escalation_after_sec INTEGER NOT NULL DEFAULT 0,
       template TEXT,
       cooldown_sec INTEGER NOT NULL DEFAULT 900,
       created_at INTEGER NOT NULL,
@@ -91,7 +145,8 @@ function initSchema(db: DatabaseSync) {
       ack_at INTEGER,
       ack_by TEXT,
       silenced_until INTEGER,
-      last_notified_at INTEGER
+      last_notified_at INTEGER,
+      escalated_at INTEGER
     );
     CREATE UNIQUE INDEX IF NOT EXISTS idx_ops_alerts_active
       ON ops_alerts(rule_id, target_id, object_type, object_name)
@@ -135,6 +190,8 @@ function initSchema(db: DatabaseSync) {
       requested_at INTEGER NOT NULL,
       decided_by TEXT,
       decided_at INTEGER,
+      first_approved_by TEXT,
+      first_approved_at INTEGER,
       executed_at INTEGER,
       result TEXT,
       expires_at INTEGER NOT NULL
@@ -152,6 +209,13 @@ function initSchema(db: DatabaseSync) {
       result TEXT
     );
     CREATE INDEX IF NOT EXISTS idx_ops_audit_time ON ops_audit_logs(ts);
+
+    CREATE TABLE IF NOT EXISTS ops_local_roles (
+      username TEXT PRIMARY KEY,
+      role TEXT NOT NULL,
+      updated_by TEXT NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
 
     CREATE TABLE IF NOT EXISTS ops_model_profiles (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -189,6 +253,20 @@ function initSchema(db: DatabaseSync) {
     CREATE INDEX IF NOT EXISTS idx_ops_chat_messages_session
       ON ops_chat_messages(session_id, id);
   `)
+
+  ensureColumn(db, "ops_rules", "escalation_channel_ids", "TEXT NOT NULL DEFAULT '[]'")
+  ensureColumn(db, "ops_rules", "escalation_after_sec", "INTEGER NOT NULL DEFAULT 0")
+  ensureColumn(db, "ops_alerts", "escalated_at", "INTEGER")
+  ensureColumn(db, "ops_approvals", "first_approved_by", "TEXT")
+  ensureColumn(db, "ops_approvals", "first_approved_at", "INTEGER")
+}
+
+function ensureColumn(db: DatabaseSync, table: string, column: string, definition: string) {
+  try {
+    db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`)
+  } catch {
+    // Column already exists.
+  }
 }
 
 const DEFAULT_SETTINGS: Record<string, string> = {
@@ -196,9 +274,12 @@ const DEFAULT_SETTINGS: Record<string, string> = {
   sample_retention_days: process.env.OPS_SAMPLE_RETENTION_DAYS || "30",
   alert_retention_days: process.env.OPS_ALERT_RETENTION_DAYS || "180",
   notification_retention_days: process.env.OPS_NOTIFICATION_RETENTION_DAYS || "90",
+  audit_retention_days: process.env.OPS_AUDIT_RETENTION_DAYS || "365",
+  backup_retention_days: process.env.OPS_BACKUP_RETENTION_DAYS || "7",
   timezone: process.env.OPS_TIMEZONE || "Asia/Shanghai",
   webhook_allow_private: process.env.OPS_WEBHOOK_ALLOW_PRIVATE || "false",
   chat_enabled: process.env.OPS_CHAT_ENABLED || "true",
+  two_person_approval: process.env.OPS_TWO_PERSON_APPROVAL || "false",
   maintenance_until: "0",
 }
 
@@ -290,15 +371,32 @@ export function pruneOpsData() {
   const sampleDays = Number(map.get("sample_retention_days") ?? 30)
   const alertDays = Number(map.get("alert_retention_days") ?? 180)
   const notificationDays = Number(map.get("notification_retention_days") ?? 90)
+  const auditDays = Number(map.get("audit_retention_days") ?? 365)
   const current = now()
 
-  db.prepare("DELETE FROM ops_samples WHERE ts < ?").run(
-    current - sampleDays * 24 * 60 * 60 * 1000,
+  const sampleCutoff = current - sampleDays * 24 * 60 * 60 * 1000
+  db.prepare(
+    `INSERT INTO ops_samples_rollup
+       (target_id, object_type, object_name, metric, bucket_ts, value, samples)
+     SELECT target_id, object_type, object_name, metric,
+            (ts / 3600000) * 3600000, AVG(value), COUNT(*)
+     FROM ops_samples
+     WHERE ts < ?
+     GROUP BY target_id, object_type, object_name, metric, (ts / 3600000) * 3600000
+     ON CONFLICT(target_id, object_type, object_name, metric, bucket_ts)
+     DO UPDATE SET value = excluded.value, samples = excluded.samples`,
+  ).run(sampleCutoff)
+  db.prepare("DELETE FROM ops_samples WHERE ts < ?").run(sampleCutoff)
+  db.prepare("DELETE FROM ops_samples_rollup WHERE bucket_ts < ?").run(
+    current - 365 * 24 * 60 * 60 * 1000,
   )
   db.prepare("DELETE FROM ops_alerts WHERE status = 'resolved' AND resolved_at < ?").run(
     current - alertDays * 24 * 60 * 60 * 1000,
   )
   db.prepare("DELETE FROM ops_notifications WHERE created_at < ?").run(
     current - notificationDays * 24 * 60 * 60 * 1000,
+  )
+  db.prepare("DELETE FROM ops_audit_logs WHERE ts < ?").run(
+    current - auditDays * 24 * 60 * 60 * 1000,
   )
 }

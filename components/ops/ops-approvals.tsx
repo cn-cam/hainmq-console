@@ -65,8 +65,15 @@ export function OpsApprovals() {
   const decide = async (approval: OpsApproval, action: "approve" | "reject") => {
     setBusy(true)
     try {
-      await opsPost(`/approvals/${approval.id}`, { action })
-      setMessage(action === "approve" ? tr("approvals.executed") : tr("approvals.rejected"))
+      const result = await opsPost<{ result?: { pending?: boolean } }>(
+        `/approvals/${approval.id}`,
+        { action },
+      )
+      if (result.result?.pending) {
+        setMessage(tr("approvals.firstApproved"))
+      } else {
+        setMessage(action === "approve" ? tr("approvals.executed") : tr("approvals.rejected"))
+      }
       setSelected(null)
       await load()
     } catch (err) {
@@ -168,6 +175,9 @@ export function OpsApprovals() {
                 <Info label={tr("common.target")} value={String(selected.targetId)} />
                 <Info label={tr("approvals.requestedBy")} value={selected.requestedBy} />
                 <Info label={tr("common.status")} value={statusLabel(selected.status)} />
+                {selected.firstApprovedBy && (
+                  <Info label={tr("approvals.firstApprovedBy")} value={selected.firstApprovedBy} />
+                )}
               </div>
               <div>
                 <p className="mb-1 text-muted-foreground">{tr("approvals.payload")}</p>
@@ -200,10 +210,21 @@ export function OpsApprovals() {
                   <X className="mr-1 h-3.5 w-3.5" /> {tr("approvals.reject")}
                 </Button>
                 <Button
-                  disabled={busy}
+                  disabled={
+                    busy ||
+                    Boolean(
+                      me?.twoPersonApproval &&
+                        selected.firstApprovedBy === me.username,
+                    )
+                  }
                   onClick={() => selected && void decide(selected, "approve")}
                 >
-                  <Check className="mr-1 h-3.5 w-3.5" /> {tr("approvals.approve")}
+                  <Check className="mr-1 h-3.5 w-3.5" />
+                  {me?.twoPersonApproval && selected.firstApprovedBy === me.username
+                    ? tr("approvals.waitingSecond")
+                    : me?.twoPersonApproval && !selected.firstApprovedBy
+                      ? tr("approvals.firstApprove")
+                      : tr("approvals.approve")}
                 </Button>
               </>
             )}

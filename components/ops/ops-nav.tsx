@@ -16,6 +16,9 @@ const TABS: Array<{ href: string; key: OpsTextKey; adminOnly?: boolean }> = [
   { href: "/ops/approvals", key: "tabs.approvals" },
   { href: "/ops/chat", key: "tabs.chat" },
   { href: "/ops/models", key: "tabs.models", adminOnly: true },
+  { href: "/ops/roles", key: "tabs.roles", adminOnly: true },
+  { href: "/ops/audit", key: "tabs.audit", adminOnly: true },
+  { href: "/ops/backups", key: "tabs.backups", adminOnly: true },
   { href: "/ops/settings", key: "tabs.settings", adminOnly: true },
 ]
 

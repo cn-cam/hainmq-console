@@ -50,6 +50,8 @@ type ChannelForm = {
   cc: string
   replyTo: string
   url: string
+  preset: string
+  chatId: string
   method: string
   headers: string
   bodyTemplate: string
@@ -74,6 +76,8 @@ const EMPTY: ChannelForm = {
   cc: "",
   replyTo: "",
   url: "",
+  preset: "generic",
+  chatId: "",
   method: "POST",
   headers: "{}",
   bodyTemplate: "",
@@ -136,6 +140,8 @@ export function OpsChannels() {
       cc: Array.isArray(config.cc) ? config.cc.join(", ") : "",
       replyTo: String(config.replyTo || ""),
       url: String(config.url || ""),
+      preset: String(config.preset || "generic"),
+      chatId: String(config.chatId || ""),
       method: String(config.method || "POST"),
       headers: JSON.stringify(config.headers || {}, null, 2),
       bodyTemplate: String(config.bodyTemplate || ""),
@@ -174,6 +180,8 @@ export function OpsChannels() {
             }
           : {
               url: form.url,
+              preset: form.preset,
+              chatId: form.chatId || undefined,
               method: form.method,
               headers,
               bodyTemplate: form.bodyTemplate || undefined,
@@ -428,6 +436,26 @@ export function OpsChannels() {
               </>
             ) : (
               <>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">{tr("channels.preset")}</Label>
+                  <Select
+                    value={form.preset}
+                    onValueChange={(preset) => setForm({ ...form, preset })}
+                  >
+                    <SelectTrigger className="h-9 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="generic">{tr("channels.presetGeneric")}</SelectItem>
+                      <SelectItem value="dingtalk">{tr("channels.presetDingtalk")}</SelectItem>
+                      <SelectItem value="feishu">{tr("channels.presetFeishu")}</SelectItem>
+                      <SelectItem value="wecom">{tr("channels.presetWecom")}</SelectItem>
+                      <SelectItem value="slack">{tr("channels.presetSlack")}</SelectItem>
+                      <SelectItem value="teams">{tr("channels.presetTeams")}</SelectItem>
+                      <SelectItem value="telegram">{tr("channels.presetTelegram")}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="space-y-1.5 sm:col-span-2">
                   <Label className="text-xs">{tr("channels.url")}</Label>
                   <Input
@@ -436,6 +464,17 @@ export function OpsChannels() {
                     className="h-9 font-mono text-sm"
                   />
                 </div>
+                {form.preset === "telegram" && (
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label className="text-xs">{tr("channels.chatId")}</Label>
+                    <Input
+                      value={form.chatId}
+                      onChange={(event) => setForm({ ...form, chatId: event.target.value })}
+                      className="h-9 font-mono text-sm"
+                    />
+                    <p className="text-[10px] text-muted-foreground">{tr("channels.chatIdHint")}</p>
+                  </div>
+                )}
                 <div className="space-y-1.5">
                   <Label className="text-xs">{tr("channels.method")}</Label>
                   <Select

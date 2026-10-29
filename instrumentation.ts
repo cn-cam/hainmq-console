@@ -3,4 +3,7 @@ export async function register() {
 
   const { startOpsScheduler } = await import("./lib/ops/scheduler")
   startOpsScheduler()
+
+  const { registerOpsShutdown } = await import("./lib/ops/shutdown")
+  registerOpsShutdown()
 }

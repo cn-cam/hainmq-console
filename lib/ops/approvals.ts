@@ -1,6 +1,8 @@
+import { OpsHttpError } from "./auth"
 import { insertAuditLog, now } from "./db"
 import { rabbitmqRequestWithCredentials } from "./rabbitmq"
-import { getApproval, getTarget, updateApproval } from "./store"
+import { getSettings } from "./settings"
+import { getApproval, getTarget, recordFirstApproval, updateApproval } from "./store"
 import type { AuthSession } from "@/lib/rabbitmq/types"
 import type { OpsUser } from "./types"
 
@@ -18,6 +20,23 @@ export async function approveAndExecute(
   if (approval.expiresAt < now()) {
     updateApproval(approvalId, "expired", user.username, "Expired before approval")
     throw new Error("Approval has expired")
+  }
+
+  const settings = getSettings()
+  if (settings.twoPersonApproval) {
+    if (!approval.firstApprovedBy) {
+      recordFirstApproval(approvalId, user.username)
+      insertAuditLog({
+        actor: user.username,
+        action: "approval.first_approve",
+        target: approvalId,
+        details: { action: approval.action },
+      })
+      return { pending: true, firstApprovedBy: user.username }
+    }
+    if (approval.firstApprovedBy === user.username) {
+      throw new OpsHttpError(409, "A second approver is required")
+    }
   }
 
   const target = getTarget(approval.targetId)

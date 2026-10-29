@@ -34,6 +34,10 @@ services:
       - OPS_ADMIN_USERS=${OPS_ADMIN_USERS:-administrator}
       - OPS_WEBHOOK_ALLOW_PRIVATE=${OPS_WEBHOOK_ALLOW_PRIVATE:-false}
       - OPS_CHAT_ENABLED=${OPS_CHAT_ENABLED:-true}
+      - OPS_TWO_PERSON_APPROVAL=${OPS_TWO_PERSON_APPROVAL:-false}
+      - OPS_AUDIT_RETENTION_DAYS=${OPS_AUDIT_RETENTION_DAYS:-365}
+      - OPS_BACKUP_RETENTION_DAYS=${OPS_BACKUP_RETENTION_DAYS:-7}
+      - OPS_METRICS_TOKEN=${OPS_METRICS_TOKEN:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
