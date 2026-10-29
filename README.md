@@ -136,7 +136,7 @@ Open `/ops` with a RabbitMQ user that has the `administrator`, `policymaker`, `m
 Multi-arch image for `linux/amd64` and `linux/arm64`:
 
 ```bash
-docker pull cocam/hainmq-console:2.1.2
+docker pull cocam/hainmq-console:2.1.3
 
 docker run -d --name hainmq-console \
   -p 3000:3000 \
@@ -145,10 +145,10 @@ docker run -d --name hainmq-console \
   -e RABBITMQ_PROTOCOL=http \
   -v hainmq-data:/app/data \
   --restart=always \
-  cocam/hainmq-console:2.1.2
+  cocam/hainmq-console:2.1.3
 ```
 
-Available tags: `2.1.2`, `2.1`, `2`, `latest`.
+Available tags: `2.1.3`, `2.1`, `2`, `latest`.
 
 ### Docker Compose (recommended)
 
@@ -165,7 +165,7 @@ The Compose file defaults to `host.docker.internal` for `RABBITMQ_HOST`, so it w
 Build the image locally (the upstream GHCR image does not include this fork's changes):
 
 ```bash
-docker build -t hainmq-console:2.1.2 .
+docker build -t hainmq-console:2.1.3 .
 
 docker run -d --name hainmq-console \
   -p 3000:3000 \
@@ -174,7 +174,7 @@ docker run -d --name hainmq-console \
   -e RABBITMQ_PROTOCOL=http \
   -v hainmq-data:/app/data \
   --restart=always \
-  hainmq-console:2.1.2
+  hainmq-console:2.1.3
 ```
 
 If GitHub Actions is enabled for this repository, `docker-publish.yml` publishes a multi-arch image to both `ghcr.io/<owner>/hainmq-console` and Docker Hub. Otherwise build locally or use Compose.
@@ -240,7 +240,7 @@ These are read by Docker Compose from `.env`; they are not runtime variables of 
 
 | Variable | Default | Description |
 |---|---|---|
-| `HAINMQ_IMAGE` | `hainmq-console:2.1.2` | Image name and tag used or built by Compose |
+| `HAINMQ_IMAGE` | `hainmq-console:2.1.3` | Image name and tag used or built by Compose |
 | `HAINMQ_PORT` | `3000` | Host port published for the web UI |
 | `HAINMQ_CONTAINER_NAME` | `hainmq-console` | Container name used by Compose |
 
@@ -407,8 +407,8 @@ The e2e suite covers the full auth surface (both broker tag formats, Secure-cook
 To publish a release, add the two Docker Hub secrets, then push a version tag or run **Build & Push Docker Image** manually from the Actions tab:
 
 ```bash
-git tag v2.1.2
-git push origin v2.1.2
+git tag v2.1.3
+git push origin v2.1.3
 ```
 - **Dependabot** — weekly grouped updates for npm, GitHub Actions, and the Docker base image
 

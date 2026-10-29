@@ -136,7 +136,7 @@ docker compose up -d --build
 支持 `linux/amd64` 和 `linux/arm64` 多架构：
 
 ```bash
-docker pull cocam/hainmq-console:2.1.2
+docker pull cocam/hainmq-console:2.1.3
 
 docker run -d --name hainmq-console \
   -p 3000:3000 \
@@ -145,10 +145,10 @@ docker run -d --name hainmq-console \
   -e RABBITMQ_PROTOCOL=http \
   -v hainmq-data:/app/data \
   --restart=always \
-  cocam/hainmq-console:2.1.2
+  cocam/hainmq-console:2.1.3
 ```
 
-可用标签：`2.1.2`、`2.1`、`2`、`latest`。
+可用标签：`2.1.3`、`2.1`、`2`、`latest`。
 
 ### Docker Compose（推荐）
 
@@ -165,7 +165,7 @@ Compose 默认将 `RABBITMQ_HOST` 设为 `host.docker.internal`，可直接连�
 本地构建镜像（上游 GHCR 镜像不包含本分支的改动）：
 
 ```bash
-docker build -t hainmq-console:2.1.2 .
+docker build -t hainmq-console:2.1.3 .
 
 docker run -d --name hainmq-console \
   -p 3000:3000 \
@@ -174,7 +174,7 @@ docker run -d --name hainmq-console \
   -e RABBITMQ_PROTOCOL=http \
   -v hainmq-data:/app/data \
   --restart=always \
-  hainmq-console:2.1.2
+  hainmq-console:2.1.3
 ```
 
 如果本仓库启用了 GitHub Actions，`docker-publish.yml` 会构建并推送多架构镜像到 GHCR 和 Docker Hub。否则请本地构建或使用 Compose。
@@ -240,7 +240,7 @@ docker run -d --name hainmq-console \
 
 | 变量 | 默认值 | 说明 |
 |---|---|---|
-| `HAINMQ_IMAGE` | `hainmq-console:2.1.2` | Compose 使用或构建的镜像名称和标签 |
+| `HAINMQ_IMAGE` | `hainmq-console:2.1.3` | Compose 使用或构建的镜像名称和标签 |
 | `HAINMQ_PORT` | `3000` | Web 界面对外发布的宿主机端口 |
 | `HAINMQ_CONTAINER_NAME` | `hainmq-console` | Compose 使用的容器名称 |
 
@@ -407,8 +407,8 @@ npm run e2e           # 基于内置模拟 Broker 的端到端测试
 发布版本时，先添加两个 Docker Hub Secrets，然后推送版本标签，或在 Actions 页面手动运行 **Build & Push Docker Image**：
 
 ```bash
-git tag v2.1.2
-git push origin v2.1.2
+git tag v2.1.3
+git push origin v2.1.3
 ```
 - **Dependabot** — 每周分组更新 npm、GitHub Actions 和 Docker 基础镜像
 

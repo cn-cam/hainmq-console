@@ -82,7 +82,7 @@
             "applicationCategory": "DeveloperApplication",
             "applicationSubCategory": "RabbitMQ management and operations",
             "operatingSystem": "Linux, Docker",
-            "softwareVersion": "2.1.2",
+            "softwareVersion": "2.1.3",
             "url": "https://cn-cam.github.io/hainmq-console/",
             "downloadUrl": "https://hub.docker.com/r/cocam/hainmq-console",
             "codeRepository": "https://github.com/cn-cam/hainmq-console",
@@ -152,7 +152,7 @@
                 "name": "如何部署海心云 MQ 管理台？",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "推荐使用 Docker 镜像 cocam/hainmq-console:2.1.2，挂载 /app/data，开放 3000 端口，并通过 HTTPS 反向代理访问。"
+                  "text": "推荐使用 Docker 镜像 cocam/hainmq-console:2.1.3，挂载 /app/data，开放 3000 端口，并通过 HTTPS 反向代理访问。"
                 }
               }
             ]
@@ -928,7 +928,7 @@
       <div class="wrap">
         <section class="hero">
           <div>
-            <span class="eyebrow"><span class="dot"></span> v2.1.2 · 基于 RabbitScout（MIT）</span>
+            <span class="eyebrow"><span class="dot"></span> v2.1.3 · 基于 RabbitScout（MIT）</span>
             <h1>把 RabbitMQ 管理与运维，<span>放进一个现代工作台</span></h1>
             <p class="lead">
               实时监控、队列管理、告警通知、MCP 自动化与模型辅助对话。
@@ -955,10 +955,10 @@
           </div>
         </section>
 
-        <section class="whisper" aria-label="AI 旁白">
+        <section class="whisper" aria-label="海浪电台">
           <p>
-            <span class="whisper-label">AI 旁白</span>
-            <span id="whisper-text">0 和 1 没变，变的是谁在敲键盘。AI 正在重排软件世界的牌桌，我们负责把消息队列看紧。</span>
+            <span class="whisper-label">海浪电台</span>
+            <span id="whisper-text">队列会堵，发布也会堵，但周五的下班不会。海心云 MQ 管理台负责把消息送到该去的地方，剩下的交给时间。</span>
           </p>
         </section>
 
@@ -1061,7 +1061,7 @@
             </details>
             <details>
               <summary>如何部署海心云 MQ 管理台？</summary>
-              <p>推荐使用 Docker 镜像 <code>cocam/hainmq-console:2.1.2</code>，挂载 <code>/app/data</code>，开放 3000 端口，并通过 HTTPS 反向代理访问。</p>
+              <p>推荐使用 Docker 镜像 <code>cocam/hainmq-console:2.1.3</code>，挂载 <code>/app/data</code>，开放 3000 端口，并通过 HTTPS 反向代理访问。</p>
             </details>
           </div>
         </section>
@@ -1135,7 +1135,7 @@
   -e RABBITMQ_PROTOCOL=http \
   -v hainmq-data:/app/data \
   --restart=always \
-  cocam/hainmq-console:2.1.2</code></pre>
+  cocam/hainmq-console:2.1.3</code></pre>
             </div>
           </div>
         </section>
@@ -1186,7 +1186,7 @@
           <div class="two-col">
             <div class="card">
               <h3>Docker / 内网服务器</h3>
-              <p>使用 <code>cocam/hainmq-console:2.1.2</code>，挂载 <code>hainmq-data</code>，开放 3000。适合 ECS、物理机、NAS、K8s。</p>
+              <p>使用 <code>cocam/hainmq-console:2.1.3</code>，挂载 <code>hainmq-data</code>，开放 3000。适合 ECS、物理机、NAS、K8s。</p>
             </div>
             <div class="card">
               <h3>为什么不能用 Pages 跑应用</h3>
@@ -1233,14 +1233,14 @@
       );
 
       const WHISPERS = [
-        "0 和 1 没变，变的是谁在敲键盘。AI 正在重排软件世界的牌桌，我们负责把消息队列看紧。",
-        "01 之间构建的软件正在被 AI 悄然洗牌；牌桌翻得快，队列至少还能重试。",
-        "AI 在重构世界，我们在重构队列。至少消息不会开会。",
-        "以前是人写代码给机器跑，现在是人盯着 AI 写代码给队列兜底。",
-        "代码会过时，队列会积压，只有周五的发布永远准时。",
-        "AI 洗牌，消息不洗；海心云 MQ 管理台负责把牌桌看住。",
-        "0 和 1 还是那两个数字，只是现在它们开始自己开会了。",
-        "软件世界正在被 AI 重排，我们先把 RabbitMQ 的队排好。"
+        "队列会堵，发布也会堵，但周五的下班不会。海心云 MQ 管理台负责把消息送到该去的地方，剩下的交给时间。",
+        "消息可以重试，会议不行。把 RabbitMQ 看紧一点，至少队列不会在周会上突然发难。",
+        "别怕积压，怕的是没人消费。就像待办事项，堆着不可怕，没人处理才可怕。",
+        "监控不会说谎，它只是喜欢在你下班后响。海心云 MQ 管理台替你先看一眼，再决定要不要叫你。",
+        "告警静默一小时，世界安静一整天。前提是，你知道自己在静默什么。",
+        "队列有 DLQ，人生没有。能重试的消息，就别让它变成事故。",
+        "0 和 1 没变，变的是谁在加班。把重复的事交给控制台，把判断留给人。",
+        "海心云不生产消息，只是消息的搬运工。搬得稳一点，睡得香一点。"
       ];
       const whisper = document.getElementById("whisper-text");
       if (whisper) {
