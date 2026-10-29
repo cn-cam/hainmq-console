@@ -39,13 +39,23 @@ RabbitMQ 是其各自权利人的商标。本项目与 RabbitMQ 项目及其商�
 
 **认证** — 透传认证。每个用户使用自己的 RabbitMQ 凭据登录，服务端不保存密码。兼容 RabbitMQ 3.x 和 4.x。
 
-**管理** — 管理虚拟主机、用户、权限、策略、节点和特性开关，支持 RabbitMQ definitions 导入导出。仍遵循 RabbitMQ 自身的权限体系。
+**管理** — 管理虚拟主机、用户、权限、策略、节点和特性开关，查看 Shovel/Federation，支持 RabbitMQ definitions 导入导出。仍遵循 RabbitMQ 自身的权限体系。
+
+**拓扑** — 交互式交换机/队列/绑定图，支持 vhost 范围、搜索和跳转队列详情。
+
+**批量操作** — 勾选队列后批量清空或删除，提供 dry-run 预览和逐队列结果。
+
+**收藏与视图** — 收藏队列，保存命名的筛选/状态/vhost 组合到本地。
+
+**通知与 PWA** — 顶栏活动告警铃铛，以及可安装的 PWA manifest。
 
 **多集群** — 通过 `RABBITMQ_CLUSTERS` 配置多个 RabbitMQ Management 端点；登录时选择集群，登录后可在顶栏切换。凭据仍为透传认证，并会针对所选集群重新校验。
 
 **可观测性** — 提供 Prometheus 兼容的 `GET /api/metrics`，包含目标、队列、节点告警和活动告警指标；可用 `OPS_METRICS_TOKEN` 保护。
 
 **可靠性** — SQLite WAL、每日备份、暂存式一键恢复、过期样本按小时降采样、可配置保留策略、启动完整性检查和优雅停机。
+
+**安全** — 同源写请求校验、登录限流、安全响应头、可选双人审批、审计日志，以及独立安全流水线（npm audit、Trivy、CodeQL）。
 
 **主题** — 深色和浅色模式，界面简洁，完整响应式，支持移动端。
 
@@ -391,6 +401,7 @@ npm run e2e           # 基于内置模拟 Broker 的端到端测试
 ## CI/CD
 
 - **`ci.yml`** — 在每次 Pull Request 和推送到 `main` 时执行 lint、typecheck、build 和 e2e
+- **`security.yml`** — npm audit、Trivy 文件扫描、CodeQL 和依赖审查
 - **`docker-publish.yml`** — 仅在推送 `v*` 标签或手动执行时构建并推送多架构（amd64/arm64）镜像到 GHCR 和 Docker Hub，不会在每次提交时运行。Docker Hub 发布需要仓库 Secrets：`DOCKERHUB_USERNAME`、`DOCKERHUB_TOKEN`
 
 发布版本时，先添加两个 Docker Hub Secrets，然后推送版本标签，或在 Actions 页面手动运行 **Build & Push Docker Image**：

@@ -39,13 +39,23 @@ RabbitMQ is a trademark of its respective owner. This project is not affiliated 
 
 **Auth** — Pass-through authentication. Each user logs in with their own RabbitMQ credentials. No server-side password storage. Works on RabbitMQ 3.x and 4.x.
 
-**Administration** — Manage virtual hosts, users, permissions, policies, nodes and feature flags, and import/export RabbitMQ definitions. RabbitMQ's own permissions still apply.
+**Administration** — Manage virtual hosts, users, permissions, policies, nodes and feature flags, inspect shovels and federation links, and import/export RabbitMQ definitions. RabbitMQ's own permissions still apply.
+
+**Topology** — Interactive exchange/queue/binding graph with vhost scope, search, and direct jumps to queue details.
+
+**Bulk operations** — Select queues and purge or delete them in one pass, with a dry-run preview and per-queue results.
+
+**Favorites and views** — Star queues and save named filter/state/vhost combinations locally.
+
+**Notifications and PWA** — Active-alert bell in the header and an installable PWA manifest.
 
 **Multi-cluster** — Configure multiple RabbitMQ Management endpoints with `RABBITMQ_CLUSTERS`; choose a cluster at login and switch from the header. Credentials are validated against the selected cluster and remain pass-through.
 
 **Observability** — Prometheus-compatible `GET /api/metrics` with per-target, queue, node-alarm, and active-alert series. Optionally protect it with `OPS_METRICS_TOKEN`.
 
 **Reliability** — SQLite WAL, daily backups, staged one-click restore, hourly downsampling of expired samples, configurable retention, startup integrity check, and graceful shutdown.
+
+**Security** — Same-origin write checks, login rate limiting, security headers, optional two-person approval, audit logging, and a dedicated security workflow (npm audit, Trivy, CodeQL).
 
 **Theming** — Dark and light mode with a refined, minimal UI. Fully responsive, down to mobile.
 
@@ -391,6 +401,7 @@ The e2e suite covers the full auth surface (both broker tag formats, Secure-cook
 ## CI/CD
 
 - **`ci.yml`** — lint, typecheck, build, and e2e on every pull request and push to `main`
+- **`security.yml`** — npm audit, Trivy filesystem scan, CodeQL, and dependency review
 - **`docker-publish.yml`** — builds and pushes a multi-arch (amd64/arm64) image to GHCR and Docker Hub only on `v*` tags or manual dispatch. It does not run on every commit. Docker Hub publishing requires `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` repository secrets.
 
 To publish a release, add the two Docker Hub secrets, then push a version tag or run **Build & Push Docker Image** manually from the Actions tab:
