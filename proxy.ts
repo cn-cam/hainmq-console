@@ -9,6 +9,8 @@ const PUBLIC_PATHS = [
   '/api/health',
   '/api/metrics',
   '/api/ops/mcp',
+  '/manifest.webmanifest',
+  '/icon.svg',
 ]
 
 const LOGIN_WINDOW_MS = 60_000
