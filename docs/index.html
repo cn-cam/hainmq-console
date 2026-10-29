@@ -802,6 +802,25 @@
         text-underline-offset: 3px;
       }
 
+      footer .related {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        gap: 8px 14px;
+        margin-top: 10px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      footer .related a {
+        color: var(--muted);
+        text-decoration: none;
+      }
+
+      footer .related a:hover {
+        color: var(--primary);
+      }
+
       @media (max-width: 900px) {
         .hero,
         .quick {
@@ -1191,12 +1210,28 @@
           <a href="https://github.com/cn-cam/hainmq-console">GitHub</a>
         </span>
       </div>
+      <div class="wrap related" aria-label="相关站点">
+        <span>相关站点</span>
+        <a href="https://www.sale-cloud.com.cn/" target="_blank" rel="noopener">海心云</a>
+        <a href="https://gitee.com/cn-cam/kansaas-cms-ai" target="_blank" rel="noopener">Gitee 项目</a>
+        <a href="https://deploy-ssl.cool/" target="_blank" rel="noopener">Deploy SSL</a>
+        <a href="https://xevision.cn/" target="_blank" rel="noopener">XEVision</a>
+      </div>
       <div class="wrap" style="margin-top: 10px; display: block; color: var(--muted); font-size: 10px;">
         RabbitMQ 是其各自权利人的商标。本项目与 RabbitMQ 项目及其商标权利人无隶属、赞助或背书关系。
       </div>
     </footer>
 
     <script>
+      console.log(
+        "%c欢迎在海心云划浪",
+        "font-size:22px;font-weight:700;color:#f26b1d;text-shadow:0 2px 0 rgba(0,0,0,.08);"
+      );
+      console.log(
+        "%c海心云 MQ 管理台 · HainMQ Console",
+        "font-size:12px;color:#8a8883;"
+      );
+
       const WHISPERS = [
         "0 和 1 没变，变的是谁在敲键盘。AI 正在重排软件世界的牌桌，我们负责把消息队列看紧。",
         "01 之间构建的软件正在被 AI 悄然洗牌；牌桌翻得快，队列至少还能重试。",
