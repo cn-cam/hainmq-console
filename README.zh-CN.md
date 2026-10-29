@@ -39,6 +39,8 @@ RabbitMQ 是其各自权利人的商标。本项目与 RabbitMQ 项目及其商�
 
 **认证** — 透传认证。每个用户使用自己的 RabbitMQ 凭据登录，服务端不保存密码。兼容 RabbitMQ 3.x 和 4.x。
 
+**多集群** — 通过 `RABBITMQ_CLUSTERS` 配置多个 RabbitMQ Management 端点；登录时选择集群，登录后可在顶栏切换。凭据仍为透传认证，并会针对所选集群重新校验。
+
 **主题** — 深色和浅色模式，界面简洁，完整响应式，支持移动端。
 
 ---
@@ -172,6 +174,8 @@ docker run -d --name hainmq-console \
 | `RABBITMQ_HOST` | 是 | `localhost` | RabbitMQ Management API 主机名 |
 | `RABBITMQ_PORT` | 否 | `15672` | Management API 端口（标准端口可省略） |
 | `RABBITMQ_PROTOCOL` | 否 | `http` | `http` 或 `https` |
+| `RABBITMQ_CLUSTER_NAME` | 否 | 主机名 | 默认单集群的显示名称 |
+| `RABBITMQ_CLUSTERS` | 否 | — | 集群 JSON 数组，包含 `id`、`name`、`host`、`port`、`protocol`；启用集群选择器 |
 | `RABBITMQ_API_TIMEOUT_MS` | 否 | `15000` | API 请求超时时间（毫秒） |
 | `COOKIE_SECURE` | 否 | 自动 | 强制设置会话 cookie 的 `Secure` 属性（`true`/`false`）。默认按请求自动检测，包括代理后的 `x-forwarded-proto` |
 
@@ -334,6 +338,7 @@ scripts/
 
 - 不在环境变量或磁盘中保存密码
 - 每个用户使用自己的 RabbitMQ 账号认证
+- 当前集群保存在会话中；切换集群时会用同一凭据向新集群重新校验
 - 会话在 24 小时后过期
 - 所有 API 调用都通过 Next.js 使用用户自己的凭据代理
 - cookie 的 `Secure` 属性按请求检测（兼容 `x-forwarded-proto`），因此 HTTP 部署可以正常使用，HTTPS 部署保持严格安全

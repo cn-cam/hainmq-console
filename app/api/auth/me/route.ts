@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getSessionFromCookie } from '@/lib/auth/session'
+import { getCluster, toClusterSummary } from '@/lib/rabbitmq/clusters'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,5 +13,15 @@ export async function GET() {
   if (!session) {
     return NextResponse.json({ authenticated: false }, { status: 401 })
   }
-  return NextResponse.json({ authenticated: true, user: session.user })
+
+  const cluster = getCluster(session.clusterId)
+  if (!cluster) {
+    return NextResponse.json({ authenticated: false }, { status: 401 })
+  }
+
+  return NextResponse.json({
+    authenticated: true,
+    user: session.user,
+    cluster: toClusterSummary(cluster),
+  })
 }

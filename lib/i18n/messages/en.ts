@@ -78,6 +78,8 @@ export const en = {
   "header.seconds": "{count}s",
   "header.commandPalette": "Command palette (Ctrl+K)",
   "header.brokerStatus": "Broker reachability, based on live polling",
+  "header.cluster": "Cluster",
+  "header.clusterSwitchFailed": "Unable to switch cluster",
 
   "status.connected": "Connected",
   "status.degraded": "Degraded",
@@ -100,6 +102,8 @@ export const en = {
 
   "login.welcome": "Welcome back",
   "login.subtitle": "Sign in with your RabbitMQ credentials",
+  "login.cluster": "Cluster",
+  "login.clusterPlaceholder": "Select a cluster",
   "login.brandTagline": "Monitor, alert, and operate RabbitMQ from one calm, modern workspace.",
   "login.feature.monitoring": "Live broker and queue health",
   "login.feature.alerting": "Email and Webhook alerts",

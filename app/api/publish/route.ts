@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getRabbitMQBaseUrl, RABBITMQ_API_TIMEOUT_MS } from '@/lib/rabbitmq/config'
+import { RABBITMQ_API_TIMEOUT_MS } from '@/lib/rabbitmq/config'
+import { getCluster, getClusterBaseUrl } from '@/lib/rabbitmq/clusters'
 import type { AuthSession } from '@/lib/rabbitmq/types'
 
 export const dynamic = 'force-dynamic'
@@ -18,12 +19,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
   }
 
-  let credentials: string
+  let session: AuthSession
   try {
-    const session: AuthSession = JSON.parse(cookie.value)
-    credentials = session.credentials
+    session = JSON.parse(cookie.value) as AuthSession
   } catch {
     return NextResponse.json({ error: 'Invalid session' }, { status: 401 })
+  }
+
+  const cluster = getCluster(session.clusterId)
+  if (!cluster) {
+    return NextResponse.json({ error: 'Cluster not configured' }, { status: 401 })
   }
 
   try {
@@ -41,12 +46,12 @@ export async function POST(request: NextRequest) {
     // The default (nameless) exchange is addressed as "amq.default" in
     // management API URLs — an empty path segment is not routable.
     const encodedExchange = exchange ? encodeURIComponent(exchange) : 'amq.default'
-    const url = `${getRabbitMQBaseUrl()}/api/exchanges/${encodedVhost}/${encodedExchange}/publish`
+    const url = `${getClusterBaseUrl(cluster)}/api/exchanges/${encodedVhost}/${encodedExchange}/publish`
 
     const response = await fetch(url, {
       method: 'POST',
       headers: {
-        Authorization: `Basic ${credentials}`,
+        Authorization: `Basic ${session.credentials}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({

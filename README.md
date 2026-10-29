@@ -39,6 +39,8 @@ RabbitMQ is a trademark of its respective owner. This project is not affiliated 
 
 **Auth** — Pass-through authentication. Each user logs in with their own RabbitMQ credentials. No server-side password storage. Works on RabbitMQ 3.x and 4.x.
 
+**Multi-cluster** — Configure multiple RabbitMQ Management endpoints with `RABBITMQ_CLUSTERS`; choose a cluster at login and switch from the header. Credentials are validated against the selected cluster and remain pass-through.
+
 **Theming** — Dark and light mode with a refined, minimal UI. Fully responsive, down to mobile.
 
 ---
@@ -172,6 +174,8 @@ The image runs as a non-root user and includes a container `HEALTHCHECK` against
 | `RABBITMQ_HOST` | Yes | `localhost` | RabbitMQ Management API hostname |
 | `RABBITMQ_PORT` | No | `15672` | Management API port (omit for default/standard ports) |
 | `RABBITMQ_PROTOCOL` | No | `http` | `http` or `https` |
+| `RABBITMQ_CLUSTER_NAME` | No | host | Display name for the default single cluster |
+| `RABBITMQ_CLUSTERS` | No | — | JSON array of clusters with `id`, `name`, `host`, `port`, `protocol`; enables the cluster selector |
 | `RABBITMQ_API_TIMEOUT_MS` | No | `15000` | API request timeout in milliseconds |
 | `COOKIE_SECURE` | No | auto | Force the session cookie's `Secure` attribute (`true`/`false`). By default it is detected per request, including `x-forwarded-proto` behind proxies |
 
@@ -334,6 +338,7 @@ HainMQ Console uses **pass-through authentication**. When a user logs in, their 
 
 - No passwords are stored in environment variables or on disk
 - Each user authenticates with their own RabbitMQ account
+- The selected cluster is stored in the session; switching validates the same credentials against the new cluster
 - Session expires after 24 hours
 - All API calls are proxied through Next.js with the user's own credentials
 - The cookie's `Secure` attribute is detected per request (`x-forwarded-proto` aware), so plain-HTTP deployments keep working sessions and HTTPS deployments stay strict

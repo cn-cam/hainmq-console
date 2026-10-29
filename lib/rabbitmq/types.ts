@@ -264,6 +264,11 @@ export interface QueueMessage {
 
 // ── Auth ─────────────────────────────────────────────────────────────
 
+export interface ClusterSummary {
+  id: string
+  name: string
+}
+
 export interface RabbitMQUser {
   username: string
   isAdmin: boolean
@@ -273,4 +278,5 @@ export interface RabbitMQUser {
 export interface AuthSession {
   credentials: string // base64(username:password)
   user: RabbitMQUser
+  clusterId?: string
 }

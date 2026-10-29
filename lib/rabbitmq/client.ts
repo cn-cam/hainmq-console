@@ -1,4 +1,5 @@
-import { getRabbitMQBaseUrl, RABBITMQ_API_TIMEOUT_MS } from './config'
+import { RABBITMQ_API_TIMEOUT_MS } from './config'
+import { getCluster, getClusterBaseUrl } from './clusters'
 import { RabbitMQError } from './errors'
 import { getSessionFromCookie } from '@/lib/auth/session'
 import type { AuthSession } from './types'
@@ -24,8 +25,13 @@ export async function rabbitmqFetch<T = unknown>(
     throw new RabbitMQError(401, 'Not authenticated', 'AUTH')
   }
 
+  const cluster = getCluster(session.clusterId)
+  if (!cluster) {
+    throw new RabbitMQError(401, 'Cluster not configured', 'AUTH')
+  }
+
   const cleanPath = path.startsWith('/') ? path.slice(1) : path
-  const url = `${getRabbitMQBaseUrl()}/api/${cleanPath}`
+  const url = `${getClusterBaseUrl(cluster)}/api/${cleanPath}`
 
   const response = await fetch(url, {
     ...options,
@@ -65,9 +71,15 @@ export async function rabbitmqFetch<T = unknown>(
 export async function validateCredentials(
   username: string,
   password: string,
+  clusterId?: string,
 ): Promise<{ name: string; tags: string | string[] }> {
+  const cluster = getCluster(clusterId)
+  if (!cluster) {
+    throw new RabbitMQError(400, 'Unknown cluster', 'API')
+  }
+
   const credentials = Buffer.from(`${username}:${password}`).toString('base64')
-  const url = `${getRabbitMQBaseUrl()}/api/whoami`
+  const url = `${getClusterBaseUrl(cluster)}/api/whoami`
 
   const response = await fetch(url, {
     headers: {

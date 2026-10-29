@@ -40,8 +40,28 @@ export function isSecureRequest(request: Request): boolean {
   }
 }
 
-export function createSession(credentials: string, user: RabbitMQUser): AuthSession {
-  return { credentials, user }
+export function createSession(
+  credentials: string,
+  user: RabbitMQUser,
+  clusterId?: string,
+): AuthSession {
+  return { credentials, user, ...(clusterId ? { clusterId } : {}) }
+}
+
+export function decodeBasicCredentials(
+  credentials: string,
+): { username: string; password: string } | null {
+  try {
+    const decoded = Buffer.from(credentials, 'base64').toString('utf8')
+    const separator = decoded.indexOf(':')
+    if (separator < 0) return null
+    return {
+      username: decoded.slice(0, separator),
+      password: decoded.slice(separator + 1),
+    }
+  } catch {
+    return null
+  }
 }
 
 export function sessionCookieOptions(request: Request) {

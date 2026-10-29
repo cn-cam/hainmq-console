@@ -13,6 +13,7 @@ import {
   Moon,
   Pause,
   RefreshCw,
+  Server,
   ShieldCheck,
   Sun,
   User,
@@ -40,8 +41,9 @@ import {
 import { useT } from "@/lib/i18n/client"
 import type { MessageKey } from "@/lib/i18n/dictionaries"
 import { usePolling } from "@/hooks/use-polling"
+import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
-import type { VHost } from "@/lib/rabbitmq/types"
+import type { ClusterSummary, VHost } from "@/lib/rabbitmq/types"
 
 const PAGE_TITLES: Record<string, MessageKey> = {
   "/": "nav.overview",
@@ -64,10 +66,58 @@ export function Header({ onMobileMenu }: { onMobileMenu?: () => void }) {
   const t = useT()
   const branding = useBranding()
   const { setTheme, resolvedTheme } = useTheme()
-  const { user, clearAuth, hydrate } = useAuth()
+  const { user, cluster, setAuth, clearAuth, hydrate } = useAuth()
   const { refreshInterval, setRefreshInterval, vhost, setVhost } = usePreferences()
   const status = useConnectionStatus((s) => s.status)
+  const { toast } = useToast()
   const [paletteOpen, setPaletteOpen] = React.useState(false)
+  const [clusters, setClusters] = React.useState<ClusterSummary[]>([])
+  const [switchingCluster, setSwitchingCluster] = React.useState(false)
+
+  React.useEffect(() => {
+    let cancelled = false
+    fetch("/api/clusters")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!cancelled && Array.isArray(data?.clusters)) setClusters(data.clusters)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const switchCluster = async (clusterId: string) => {
+    if (!clusterId || clusterId === cluster?.id) return
+    setSwitchingCluster(true)
+    try {
+      const res = await fetch("/api/auth/switch-cluster", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clusterId }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        toast({
+          title: t("header.clusterSwitchFailed"),
+          description: data.error,
+          variant: "destructive",
+        })
+        return
+      }
+      setVhost(null)
+      setAuth(data.user, data.cluster ?? null)
+      window.location.reload()
+    } catch {
+      toast({
+        title: t("header.clusterSwitchFailed"),
+        description: t("error.unreachable"),
+        variant: "destructive",
+      })
+    } finally {
+      setSwitchingCluster(false)
+    }
+  }
 
   // Restore user info after hard reloads
   React.useEffect(() => {
@@ -104,6 +154,7 @@ export function Header({ onMobileMenu }: { onMobileMenu?: () => void }) {
   const currentInterval = REFRESH_INTERVALS.find((i) => i.value === refreshInterval)
   const intervalLabel = (ms: number) =>
     ms === 0 ? t("header.off") : t("header.seconds", { count: ms / 1000 })
+  const currentCluster = cluster ?? clusters[0] ?? null
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border/60 bg-background/80 px-4 backdrop-blur-md lg:px-6">
@@ -137,6 +188,36 @@ export function Header({ onMobileMenu }: { onMobileMenu?: () => void }) {
       </Tooltip>
 
       <div className="ml-auto flex items-center gap-1.5">
+        {clusters.length > 1 && currentCluster && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="hidden h-8 gap-1.5 px-2.5 text-xs text-muted-foreground sm:inline-flex"
+                disabled={switchingCluster}
+              >
+                <Server className="h-3.5 w-3.5" />
+                <span className="max-w-[140px] truncate">{currentCluster.name}</span>
+                <ChevronDown className="h-3 w-3 opacity-60" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-[180px]">
+              <DropdownMenuLabel>{t("header.cluster")}</DropdownMenuLabel>
+              {clusters.map((item) => (
+                <DropdownMenuItem
+                  key={item.id}
+                  onClick={() => void switchCluster(item.id)}
+                  disabled={switchingCluster}
+                >
+                  <span className="truncate">{item.name}</span>
+                  {item.id === currentCluster.id && <Check className="ml-auto h-4 w-4" />}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+
         {/* VHost scope */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

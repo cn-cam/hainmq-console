@@ -80,6 +80,8 @@ export const zhCN: Record<MessageKey, string> = {
   "header.seconds": "{count} 秒",
   "header.commandPalette": "命令面板 (Ctrl+K)",
   "header.brokerStatus": "Broker 可达性（基于实时轮询）",
+  "header.cluster": "集群",
+  "header.clusterSwitchFailed": "无法切换集群",
 
   "status.connected": "已连接",
   "status.degraded": "不稳定",
@@ -102,6 +104,8 @@ export const zhCN: Record<MessageKey, string> = {
 
   "login.welcome": "欢迎回来",
   "login.subtitle": "使用 RabbitMQ 账号登录",
+  "login.cluster": "集群",
+  "login.clusterPlaceholder": "选择集群",
   "login.brandTagline": "在一个现代化工作台中完成 RabbitMQ 监控、告警与自动化运维。",
   "login.feature.monitoring": "实时 Broker 与队列健康",
   "login.feature.alerting": "邮件与 Webhook 告警",

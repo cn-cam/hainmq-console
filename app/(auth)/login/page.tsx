@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useTheme } from "next-themes"
 import {
@@ -19,12 +19,20 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { BrandMark } from "@/components/branding/brand-mark"
 import { BrandingFooter } from "@/components/branding/branding-footer"
 import { LocaleSwitcher } from "@/components/layout/locale-switcher"
 import { useAuth } from "@/lib/auth/store"
 import { useBranding } from "@/lib/branding/client"
 import { useT } from "@/lib/i18n/client"
+import type { ClusterSummary } from "@/lib/rabbitmq/types"
 import { motion } from "motion/react"
 
 const FEATURES = [
@@ -43,6 +51,23 @@ function LoginForm() {
   const [loading, setLoading] = useState(false)
   const [showPw, setShowPw] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [clusters, setClusters] = useState<ClusterSummary[]>([])
+  const [clusterId, setClusterId] = useState("")
+
+  useEffect(() => {
+    let cancelled = false
+    fetch("/api/clusters")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (cancelled || !data?.clusters?.length) return
+        setClusters(data.clusters)
+        setClusterId(data.defaultId ?? data.clusters[0].id)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -63,7 +88,7 @@ function LoginForm() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, password, clusterId }),
       })
 
       const data = await res.json()
@@ -82,7 +107,7 @@ function LoginForm() {
       }
 
       if (data.authenticated && data.user) {
-        setAuth(data.user)
+        setAuth(data.user, data.cluster ?? null)
         // Return to the page the user originally asked for — resolved
         // against our own origin so ?next= can never leave the app
         // (URL parsing also neutralizes backslash normalization tricks).
@@ -218,6 +243,26 @@ function LoginForm() {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
+                {clusters.length > 1 && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-muted-foreground">
+                      {t("login.cluster")}
+                    </Label>
+                    <Select value={clusterId} onValueChange={setClusterId} disabled={loading}>
+                      <SelectTrigger className="h-11 rounded-xl border-border/60 bg-background/60">
+                        <SelectValue placeholder={t("login.clusterPlaceholder")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {clusters.map((cluster) => (
+                          <SelectItem key={cluster.id} value={cluster.id}>
+                            {cluster.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
                 <div className="space-y-1.5">
                   <Label htmlFor="username" className="text-xs font-medium text-muted-foreground">
                     {t("login.username")}

@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server'
 import { validateCredentials } from '@/lib/rabbitmq/client'
+import { getCluster, toClusterSummary } from '@/lib/rabbitmq/clusters'
 import { COOKIE_NAME, createSession, normalizeTags, sessionCookieOptions } from '@/lib/auth/session'
 import { classifyError } from '@/lib/rabbitmq/errors'
 import type { RabbitMQUser } from '@/lib/rabbitmq/types'
 
 export async function POST(request: Request) {
   try {
-    const { username, password } = await request.json()
+    const { username, password, clusterId } = await request.json()
 
     if (!username || !password) {
       return NextResponse.json(
@@ -15,7 +16,12 @@ export async function POST(request: Request) {
       )
     }
 
-    const whoami = await validateCredentials(username, password)
+    const cluster = getCluster(typeof clusterId === 'string' ? clusterId : undefined)
+    if (!cluster) {
+      return NextResponse.json({ error: 'Unknown cluster' }, { status: 400 })
+    }
+
+    const whoami = await validateCredentials(username, password, cluster.id)
     const tags = normalizeTags(whoami.tags)
 
     const user: RabbitMQUser = {
@@ -29,10 +35,14 @@ export async function POST(request: Request) {
     // Attach the cookie to the response directly. The Secure attribute is
     // derived from the actual request protocol (see isSecureRequest), so
     // plain-HTTP deployments keep working sessions.
-    const response = NextResponse.json({ authenticated: true, user })
+    const response = NextResponse.json({
+      authenticated: true,
+      user,
+      cluster: toClusterSummary(cluster),
+    })
     response.cookies.set(
       COOKIE_NAME,
-      JSON.stringify(createSession(credentials, user)),
+      JSON.stringify(createSession(credentials, user, cluster.id)),
       sessionCookieOptions(request),
     )
     return response

@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { RabbitMQUser } from '@/lib/rabbitmq/types'
+import type { ClusterSummary, RabbitMQUser } from '@/lib/rabbitmq/types'
 
 /**
  * Client-side auth state. Stores only UI display data.
@@ -8,8 +8,9 @@ import type { RabbitMQUser } from '@/lib/rabbitmq/types'
 interface AuthState {
   authenticated: boolean
   user: RabbitMQUser | null
+  cluster: ClusterSummary | null
   hydrated: boolean
-  setAuth: (user: RabbitMQUser) => void
+  setAuth: (user: RabbitMQUser, cluster?: ClusterSummary | null) => void
   clearAuth: () => void
   hydrate: () => Promise<void>
 }
@@ -17,9 +18,12 @@ interface AuthState {
 export const useAuth = create<AuthState>()((set, get) => ({
   authenticated: false,
   user: null,
+  cluster: null,
   hydrated: false,
-  setAuth: (user) => set({ authenticated: true, user, hydrated: true }),
-  clearAuth: () => set({ authenticated: false, user: null, hydrated: true }),
+  setAuth: (user, cluster = null) =>
+    set({ authenticated: true, user, cluster, hydrated: true }),
+  clearAuth: () =>
+    set({ authenticated: false, user: null, cluster: null, hydrated: true }),
   // Restore user info after a full page reload (cookie survives, store doesn't)
   hydrate: async () => {
     if (get().hydrated) return
@@ -28,7 +32,12 @@ export const useAuth = create<AuthState>()((set, get) => ({
       if (res.ok) {
         const data = await res.json()
         if (data.authenticated && data.user) {
-          set({ authenticated: true, user: data.user, hydrated: true })
+          set({
+            authenticated: true,
+            user: data.user,
+            cluster: data.cluster ?? null,
+            hydrated: true,
+          })
           return
         }
       }

@@ -51,11 +51,11 @@ function check(name, cond, detail = '') {
   }
 }
 
-async function login(username, password, headers = {}) {
+async function login(username, password, headers = {}, clusterId) {
   const res = await fetch(`${APP}/api/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...headers },
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify({ username, password, ...(clusterId ? { clusterId } : {}) }),
     redirect: 'manual',
   })
   const body = await res.json().catch(() => null)
@@ -70,9 +70,14 @@ async function main() {
     RABBITMQ_HOST: 'localhost',
     RABBITMQ_PORT: String(MOCK4_PORT),
     RABBITMQ_PROTOCOL: 'http',
+    RABBITMQ_CLUSTERS: JSON.stringify([
+      { id: 'main', name: 'Main', host: 'localhost', port: String(MOCK4_PORT), protocol: 'http' },
+      { id: 'legacy', name: 'Legacy', host: 'localhost', port: String(MOCK38_PORT), protocol: 'http' },
+    ]),
   })
 
   await waitFor(`http://localhost:${MOCK4_PORT}/api/whoami`)
+  await waitFor(`http://localhost:${MOCK38_PORT}/api/whoami`)
   await waitFor(`${APP}/api/health`)
 
   console.log('\nHealth & auth gate')
@@ -132,6 +137,56 @@ async function main() {
     const res = await authed('/api/auth/me')
     const body = await res.json()
     check('GET /api/auth/me returns session user', res.status === 200 && body?.user?.username === 'admin')
+    check('GET /api/auth/me returns selected cluster', body?.cluster?.id === 'main')
+  }
+  {
+    const res = await fetch(`${APP}/api/clusters`)
+    const body = await res.json()
+    check(
+      'GET /api/clusters lists configured clusters',
+      res.status === 200 &&
+        body?.defaultId === 'main' &&
+        body?.clusters?.length === 2 &&
+        body.clusters.some((cluster) => cluster.id === 'legacy'),
+    )
+  }
+  {
+    const { res, body, cookie: legacyCookie } = await login('admin', 'admin', {}, 'legacy')
+    const sessionCookie = legacyCookie.split(';')[0]
+    check(
+      'login against selected cluster',
+      res.status === 200 && body?.cluster?.id === 'legacy',
+    )
+
+    const me = await fetch(`${APP}/api/auth/me`, { headers: { cookie: sessionCookie } })
+    const meBody = await me.json()
+    check('session stores selected cluster', meBody?.cluster?.id === 'legacy')
+
+    const overview = await fetch(`${APP}/api/rabbitmq/overview`, {
+      headers: { cookie: sessionCookie },
+    })
+    check('proxy uses selected cluster', overview.status === 200)
+  }
+  {
+    const res = await fetch(`${APP}/api/auth/switch-cluster`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', cookie },
+      body: JSON.stringify({ clusterId: 'legacy' }),
+    })
+    const body = await res.json()
+    const switchedCookie = (res.headers.get('set-cookie') ?? '').split(';')[0]
+    check(
+      'switch cluster updates session',
+      res.status === 200 && body?.cluster?.id === 'legacy' && /rmq-session=/.test(switchedCookie),
+    )
+
+    const me = await fetch(`${APP}/api/auth/me`, { headers: { cookie: switchedCookie } })
+    const meBody = await me.json()
+    check('switched session is usable', meBody?.cluster?.id === 'legacy')
+  }
+  {
+    const { res } = await login('admin', 'admin', {}, 'missing')
+    check('unknown cluster login → 400', res.status === 400)
   }
   {
     const res = await authed('/api/rabbitmq/overview')

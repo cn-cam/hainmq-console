@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getRabbitMQBaseUrl, RABBITMQ_API_TIMEOUT_MS } from '@/lib/rabbitmq/config'
+import { RABBITMQ_API_TIMEOUT_MS } from '@/lib/rabbitmq/config'
+import { getCluster, getClusterBaseUrl } from '@/lib/rabbitmq/clusters'
 import type { AuthSession } from '@/lib/rabbitmq/types'
 
 export const dynamic = 'force-dynamic'
 
 type RouteContext = { params: Promise<{ path: string[] }> }
 
-function getCredentials(request: NextRequest): string | null {
+function getSession(request: NextRequest): AuthSession | null {
   try {
     const cookie = request.cookies.get('rmq-session')
     if (!cookie?.value) return null
-    const session: AuthSession = JSON.parse(cookie.value)
-    return session.credentials
+    return JSON.parse(cookie.value) as AuthSession
   } catch {
     return null
   }
@@ -22,22 +22,27 @@ async function proxyToRabbitMQ(
   context: RouteContext,
   method: string,
 ) {
-  const credentials = getCredentials(request)
-  if (!credentials) {
+  const session = getSession(request)
+  if (!session) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
   }
 
-  // Re-encode each segment: Next.js decodes %2F → / in params,
+  const cluster = getCluster(session.clusterId)
+  if (!cluster) {
+    return NextResponse.json({ error: 'Cluster not configured' }, { status: 401 })
+  }
+
+  // Re-encode each segment: Next.js decodes %2F �� / in params,
   // but RabbitMQ requires vhost "/" to stay encoded as %2F in the URL.
   const { path: segments } = await context.params
   const path = segments.map((s) => encodeURIComponent(s)).join('/')
   const search = request.nextUrl.search
-  const url = `${getRabbitMQBaseUrl()}/api/${path}${search}`
+  const url = `${getClusterBaseUrl(cluster)}/api/${path}${search}`
 
   const fetchOptions: RequestInit = {
     method,
     headers: {
-      Authorization: `Basic ${credentials}`,
+      Authorization: `Basic ${session.credentials}`,
       'Content-Type': 'application/json',
     },
     cache: 'no-store',
