@@ -85,6 +85,7 @@ export const en = {
   "header.alerts": "Active alerts",
   "header.noAlerts": "No active alerts",
   "header.viewAlerts": "View all alerts",
+  "header.alertsServerSide": "Alerts run server-side and continue while this page is closed.",
 
   "status.connected": "Connected",
   "status.degraded": "Degraded",

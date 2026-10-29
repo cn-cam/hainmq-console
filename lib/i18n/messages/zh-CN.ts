@@ -87,6 +87,7 @@ export const zhCN: Record<MessageKey, string> = {
   "header.alerts": "活动告警",
   "header.noAlerts": "暂无活动告警",
   "header.viewAlerts": "查看全部告警",
+  "header.alertsServerSide": "告警由服务端生成，关闭此页面后仍会继续运行。",
 
   "status.connected": "已连接",
   "status.degraded": "不稳定",

@@ -353,6 +353,9 @@ export function Header({ onMobileMenu }: { onMobileMenu?: () => void }) {
               <DropdownMenuItem onClick={() => router.push("/ops/alerts")}>
                 {t("header.viewAlerts")}
               </DropdownMenuItem>
+              <div className="px-2 pb-1 pt-1 text-[10px] leading-4 text-muted-foreground">
+                {t("header.alertsServerSide")}
+              </div>
             </DropdownMenuContent>
           </DropdownMenu>
         )}
