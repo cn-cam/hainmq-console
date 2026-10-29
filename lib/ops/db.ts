@@ -122,6 +122,7 @@ function initSchema(db: DatabaseSync) {
       channel_ids TEXT NOT NULL DEFAULT '[]',
       escalation_channel_ids TEXT NOT NULL DEFAULT '[]',
       escalation_after_sec INTEGER NOT NULL DEFAULT 0,
+      runbook_url TEXT,
       template TEXT,
       cooldown_sec INTEGER NOT NULL DEFAULT 900,
       created_at INTEGER NOT NULL,
@@ -256,6 +257,7 @@ function initSchema(db: DatabaseSync) {
 
   ensureColumn(db, "ops_rules", "escalation_channel_ids", "TEXT NOT NULL DEFAULT '[]'")
   ensureColumn(db, "ops_rules", "escalation_after_sec", "INTEGER NOT NULL DEFAULT 0")
+  ensureColumn(db, "ops_rules", "runbook_url", "TEXT")
   ensureColumn(db, "ops_alerts", "escalated_at", "INTEGER")
   ensureColumn(db, "ops_approvals", "first_approved_by", "TEXT")
   ensureColumn(db, "ops_approvals", "first_approved_at", "INTEGER")

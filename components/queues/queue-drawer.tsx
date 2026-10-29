@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Eraser, Eye, Send, Trash2, Users } from "lucide-react"
+import { Eraser, Eye, Send, Trash2, UserMinus, Users } from "lucide-react"
 import {
   Sheet,
   SheetContent,
@@ -51,6 +51,7 @@ export function QueueDrawer({ queue, open, onOpenChange, onChanged }: QueueDrawe
   const [deleteOpen, setDeleteOpen] = React.useState(false)
   const [purgeOpen, setPurgeOpen] = React.useState(false)
   const [busy, setBusy] = React.useState(false)
+  const [cancelling, setCancelling] = React.useState<string | null>(null)
 
   // Detailed queue info with a 10-minute rate history for the sparkline
   const detailUrl =
@@ -105,6 +106,31 @@ export function QueueDrawer({ queue, open, onOpenChange, onChanged }: QueueDrawe
     } finally {
       setBusy(false)
       setPurgeOpen(false)
+    }
+  }
+
+  const cancelConsumer = async (consumerTag: string) => {
+    if (!q || !window.confirm(`${t("queueDetail.cancelConsumerConfirm")}\n${consumerTag}`)) return
+    setCancelling(consumerTag)
+    try {
+      const res = await fetch(
+        `/api/rabbitmq/queues/${encodeURIComponent(q.vhost)}/${encodeURIComponent(q.name)}/consumers/${encodeURIComponent(consumerTag)}`,
+        { method: "DELETE" },
+      )
+      if (res.ok) {
+        toast({ title: t("queueDetail.consumerCancelled"), description: consumerTag })
+        refresh()
+        onChanged?.()
+      } else {
+        const body = await res.json().catch(() => null)
+        toast({
+          variant: "destructive",
+          title: t("queueDetail.consumerCancelFailed"),
+          description: body?.details || body?.error,
+        })
+      }
+    } finally {
+      setCancelling(null)
     }
   }
 
@@ -239,11 +265,23 @@ export function QueueDrawer({ queue, open, onOpenChange, onChanged }: QueueDrawe
                       >
                         <div className="flex items-center justify-between gap-2">
                           <span className="truncate font-mono">{c.consumer_tag}</span>
-                          {c.active === false ? (
-                            <Badge variant="outline">{t("common.inactive")}</Badge>
-                          ) : (
-                            <Badge variant="success">{t("common.active")}</Badge>
-                          )}
+                          <div className="flex items-center gap-1">
+                            {c.active === false ? (
+                              <Badge variant="outline">{t("common.inactive")}</Badge>
+                            ) : (
+                              <Badge variant="success">{t("common.active")}</Badge>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-destructive"
+                              title={t("queueDetail.cancelConsumer")}
+                              disabled={cancelling === c.consumer_tag}
+                              onClick={() => void cancelConsumer(c.consumer_tag)}
+                            >
+                              <UserMinus className="h-3 w-3" />
+                            </Button>
+                          </div>
                         </div>
                         <p className="mt-0.5 truncate text-muted-foreground">
                           {c.channel_details?.connection_name} · {t("queueDetail.prefetch", { count: c.prefetch_count })}

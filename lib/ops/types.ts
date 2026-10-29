@@ -59,6 +59,7 @@ export interface OpsRule {
   channelIds: number[]
   escalationChannelIds: number[]
   escalationAfterSec: number
+  runbookUrl: string | null
   template: string | null
   cooldownSec: number
   createdAt: number
@@ -79,6 +80,7 @@ export interface OpsRuleInput {
   channelIds: number[]
   escalationChannelIds?: number[]
   escalationAfterSec?: number
+  runbookUrl?: string | null
   template?: string | null
   cooldownSec?: number
 }

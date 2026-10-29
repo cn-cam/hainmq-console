@@ -7,7 +7,7 @@ export interface LatestMetric {
 
 export interface OpsTargetView extends Omit<OpsTarget, "passwordEnc"> {
   latest: Record<string, LatestMetric>
-  queueTop: Array<{ name: string; value: number }>
+  queueTop: Array<{ name: string; value: number; delta?: number; perHour?: number }>
   series: {
     publish: Array<{ ts: number; value: number }>
     deliver: Array<{ ts: number; value: number }>

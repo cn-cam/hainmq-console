@@ -127,6 +127,7 @@ function ruleFromRow(row: Row): OpsRule {
     channelIds: jsonParse<number[]>(String(row.channel_ids || "[]"), []),
     escalationChannelIds: jsonParse<number[]>(String(row.escalation_channel_ids || "[]"), []),
     escalationAfterSec: Number(row.escalation_after_sec ?? 0),
+    runbookUrl: row.runbook_url ? String(row.runbook_url) : null,
     template: row.template ? String(row.template) : null,
     cooldownSec: Number(row.cooldown_sec ?? 900),
     createdAt: Number(row.created_at),
@@ -151,8 +152,8 @@ export function createRule(input: OpsRuleInput): OpsRule {
       `INSERT INTO ops_rules
         (name, target_id, scope_type, scope_value, metric, operator, threshold, duration_sec,
          severity, enabled, channel_ids, escalation_channel_ids, escalation_after_sec,
-         template, cooldown_sec, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         runbook_url, template, cooldown_sec, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .run(
       input.name,
@@ -168,6 +169,7 @@ export function createRule(input: OpsRuleInput): OpsRule {
       JSON.stringify(input.channelIds || []),
       JSON.stringify(input.escalationChannelIds || []),
       input.escalationAfterSec ?? 0,
+      input.runbookUrl || null,
       input.template || null,
       input.cooldownSec ?? 900,
       ts,
@@ -185,7 +187,7 @@ export function updateRule(id: number, input: Partial<OpsRuleInput>): OpsRule | 
         name = ?, target_id = ?, scope_type = ?, scope_value = ?, metric = ?, operator = ?,
         threshold = ?, duration_sec = ?, severity = ?, enabled = ?, channel_ids = ?,
         escalation_channel_ids = ?, escalation_after_sec = ?,
-        template = ?, cooldown_sec = ?, updated_at = ?
+        runbook_url = ?, template = ?, cooldown_sec = ?, updated_at = ?
        WHERE id = ?`,
     )
     .run(
@@ -202,6 +204,7 @@ export function updateRule(id: number, input: Partial<OpsRuleInput>): OpsRule | 
       JSON.stringify(input.channelIds ?? existing.channelIds),
       JSON.stringify(input.escalationChannelIds ?? existing.escalationChannelIds),
       input.escalationAfterSec ?? existing.escalationAfterSec,
+      input.runbookUrl === undefined ? existing.runbookUrl : input.runbookUrl,
       input.template === undefined ? existing.template : input.template,
       input.cooldownSec ?? existing.cooldownSec,
       now(),

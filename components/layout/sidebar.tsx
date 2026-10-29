@@ -8,6 +8,7 @@ import {
   Cable,
   LayoutDashboard,
   Layers,
+  Network,
   PanelLeft,
   PanelLeftClose,
   Radio,
@@ -32,6 +33,7 @@ const navItems: Array<{
   { href: "/exchanges", labelKey: "nav.exchanges", icon: ArrowRightLeft },
   { href: "/connections", labelKey: "nav.connections", icon: Cable },
   { href: "/channels", labelKey: "nav.channels", icon: Radio },
+  { href: "/topology", labelKey: "nav.topology", icon: Network },
   { href: "/ops", labelKey: "nav.ops", icon: Activity },
   { href: "/admin", labelKey: "nav.admin", icon: Settings2 },
 ]

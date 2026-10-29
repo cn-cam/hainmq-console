@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useSearchParams } from "next/navigation"
-import { Layers, Plus, Search } from "lucide-react"
+import { Bookmark, Eraser, Layers, Plus, Search, Star, Trash2 } from "lucide-react"
 import {
   Table,
   TableBody,
@@ -15,6 +15,13 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
   Select,
   SelectContent,
@@ -35,8 +42,9 @@ import {
 import { ErrorCard } from "@/components/shared/error-card"
 import { QueueDrawer } from "./queue-drawer"
 import { CreateQueueDialog } from "./create-queue-dialog"
+import { BulkQueueDialog } from "./bulk-queue-dialog"
 import { usePolling } from "@/hooks/use-polling"
-import { usePreferences } from "@/lib/stores/preferences"
+import { usePreferences, type SavedQueueView } from "@/lib/stores/preferences"
 import { useT } from "@/lib/i18n/client"
 import { formatRate, cn } from "@/lib/utils"
 import type { Queue } from "@/lib/rabbitmq/types"
@@ -58,6 +66,12 @@ const TYPE_BADGES: Record<string, "info" | "secondary" | "warning"> = {
 export function QueueTable() {
   const t = useT()
   const vhost = usePreferences((s) => s.vhost)
+  const setVhost = usePreferences((s) => s.setVhost)
+  const favorites = usePreferences((s) => s.favorites)
+  const toggleFavorite = usePreferences((s) => s.toggleFavorite)
+  const savedViews = usePreferences((s) => s.savedQueueViews)
+  const saveQueueView = usePreferences((s) => s.saveQueueView)
+  const removeQueueView = usePreferences((s) => s.removeQueueView)
   const url = vhost
     ? `/api/rabbitmq/queues/${encodeURIComponent(vhost)}`
     : "/api/rabbitmq/queues"
@@ -74,11 +88,14 @@ export function QueueTable() {
     if (qParam !== null) setSearch(qParam)
   }
   const [stateFilter, setStateFilter] = React.useState<string>("all")
+  const [favoritesOnly, setFavoritesOnly] = React.useState(false)
   const { sortKey, sortDir, toggle, compare } = useSort<SortKey>("name")
   const rowPad = useRowPadding()
 
   const [selected, setSelected] = React.useState<Queue | null>(null)
   const [createOpen, setCreateOpen] = React.useState(false)
+  const [selectedKeys, setSelectedKeys] = React.useState<Set<string>>(new Set())
+  const [bulkAction, setBulkAction] = React.useState<"purge" | "delete" | null>(null)
 
   const list = React.useMemo(() => (Array.isArray(queues) ? queues : []), [queues])
 
@@ -90,6 +107,7 @@ export function QueueTable() {
   const filtered = React.useMemo(() => {
     let out = list
     if (stateFilter !== "all") out = out.filter((q) => q.state === stateFilter)
+    if (favoritesOnly) out = out.filter((q) => favorites.includes(`${q.vhost}/${q.name}`))
     if (search) {
       const q = search.toLowerCase()
       out = out.filter(
@@ -98,9 +116,56 @@ export function QueueTable() {
       )
     }
     return [...out].sort((a, b) => compare(a[sortKey], b[sortKey]))
-  }, [list, search, stateFilter, sortKey, compare])
+  }, [list, search, stateFilter, favoritesOnly, favorites, sortKey, compare])
 
   const { page, setPage, pageCount, paged } = usePagination(filtered)
+
+  const keyOf = (queue: Queue) => `${queue.vhost}/${queue.name}`
+  const selectedQueues = list.filter((queue) => selectedKeys.has(keyOf(queue)))
+  const allPagedSelected =
+    paged.length > 0 && paged.every((queue) => selectedKeys.has(keyOf(queue)))
+
+  const toggleQueue = (queue: Queue) => {
+    const key = keyOf(queue)
+    setSelectedKeys((current) => {
+      const next = new Set(current)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
+  const toggleAllPaged = () => {
+    setSelectedKeys((current) => {
+      const next = new Set(current)
+      if (allPagedSelected) {
+        for (const queue of paged) next.delete(keyOf(queue))
+      } else {
+        for (const queue of paged) next.add(keyOf(queue))
+      }
+      return next
+    })
+  }
+
+  const applyView = (view: SavedQueueView) => {
+    setSearch(view.search)
+    setStateFilter(view.stateFilter)
+    setVhost(view.vhost)
+    setFavoritesOnly(false)
+    setPage(1)
+  }
+
+  const saveCurrentView = () => {
+    const name = window.prompt(t("queues.viewName"))
+    if (!name?.trim()) return
+    saveQueueView({
+      id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+      name: name.trim(),
+      search,
+      stateFilter,
+      vhost,
+    })
+  }
 
   if (error && !queues) return <ErrorCard message={error} type="CONNECTION" onRetry={refresh} />
   if (loading && !queues) return <QueueTableSkeleton />
@@ -145,6 +210,79 @@ export function QueueTable() {
           </SelectContent>
         </Select>
 
+        <Button
+          variant={favoritesOnly ? "secondary" : "outline"}
+          size="sm"
+          className="h-8 gap-1.5"
+          onClick={() => setFavoritesOnly((value) => !value)}
+        >
+          <Star className={cn("h-3.5 w-3.5", favoritesOnly && "fill-current")} />
+          {t("queues.favoritesOnly")}
+        </Button>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="h-8 gap-1.5">
+              <Bookmark className="h-3.5 w-3.5" />
+              {t("queues.views")}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="min-w-[200px]">
+            <DropdownMenuItem onClick={saveCurrentView}>
+              <Plus className="h-3.5 w-3.5" /> {t("queues.saveView")}
+            </DropdownMenuItem>
+            {savedViews.length > 0 && <DropdownMenuSeparator />}
+            {savedViews.map((view) => (
+              <DropdownMenuItem key={view.id} onClick={() => applyView(view)}>
+                <span className="truncate">{view.name}</span>
+                <button
+                  type="button"
+                  className="ml-auto text-muted-foreground hover:text-destructive"
+                  aria-label={t("queues.deleteView")}
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    removeQueueView(view.id)
+                  }}
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {selectedKeys.size > 0 && (
+          <div className="flex items-center gap-1">
+            <span className="text-[11px] text-muted-foreground">
+              {t("queues.selected", { count: selectedKeys.size })}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5 text-warning hover:text-warning"
+              onClick={() => setBulkAction("purge")}
+            >
+              <Eraser className="h-3.5 w-3.5" /> {t("queues.bulkPurge")}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5 text-destructive hover:text-destructive"
+              onClick={() => setBulkAction("delete")}
+            >
+              <Trash2 className="h-3.5 w-3.5" /> {t("queues.bulkDelete")}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 text-[11px]"
+              onClick={() => setSelectedKeys(new Set())}
+            >
+              {t("queues.clearSelection")}
+            </Button>
+          </div>
+        )}
+
         <span className="ml-auto text-[11px] text-muted-foreground tnum">
           {list.length === 1
             ? t("queues.countOne", { filtered: filtered.length, total: list.length })
@@ -161,6 +299,15 @@ export function QueueTable() {
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
+              <TableHead className="w-8">
+                <input
+                  type="checkbox"
+                  aria-label={t("queues.selected", { count: paged.length })}
+                  checked={allPagedSelected}
+                  onChange={toggleAllPaged}
+                  className="h-3.5 w-3.5 accent-primary"
+                />
+              </TableHead>
               <TableHead>
                 <SortButton field="name" sortKey={sortKey} sortDir={sortDir} onToggle={toggle}>
                   {t("common.name")}
@@ -196,7 +343,7 @@ export function QueueTable() {
           <TableBody>
             {paged.length === 0 ? (
               <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={6}>
+                <TableCell colSpan={7}>
                   <EmptyState
                     icon={Layers}
                     title={
@@ -228,8 +375,37 @@ export function QueueTable() {
                   className="cursor-pointer"
                   onClick={() => setSelected(q)}
                 >
+                  <TableCell className="w-8" onClick={(event) => event.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      aria-label={q.name}
+                      checked={selectedKeys.has(keyOf(q))}
+                      onChange={() => toggleQueue(q)}
+                      className="h-3.5 w-3.5 accent-primary"
+                    />
+                  </TableCell>
                   <TableCell className={cn("font-medium", rowPad)}>
                     <span className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        className="text-muted-foreground hover:text-primary"
+                        aria-label={
+                          favorites.includes(keyOf(q))
+                            ? t("queues.unfavorite")
+                            : t("queues.favorite")
+                        }
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          toggleFavorite(keyOf(q))
+                        }}
+                      >
+                        <Star
+                          className={cn(
+                            "h-3.5 w-3.5",
+                            favorites.includes(keyOf(q)) && "fill-current text-primary",
+                          )}
+                        />
+                      </button>
                       <span className="truncate">{q.name}</span>
                       {queueType(q) !== "classic" && (
                         <Badge variant={TYPE_BADGES[queueType(q)] ?? "secondary"}>
@@ -285,6 +461,19 @@ export function QueueTable() {
       />
 
       <CreateQueueDialog open={createOpen} onOpenChange={setCreateOpen} onCreated={refresh} />
+
+      <BulkQueueDialog
+        open={bulkAction !== null}
+        onOpenChange={(open) => {
+          if (!open) setBulkAction(null)
+        }}
+        action={bulkAction ?? "purge"}
+        queues={selectedQueues}
+        onDone={() => {
+          setSelectedKeys(new Set())
+          refresh()
+        }}
+      />
     </div>
   )
 }
@@ -302,6 +491,7 @@ function QueueTableSkeleton() {
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
+              <TableHead className="w-8" />
               {[
                 t("common.name"),
                 t("common.messages"),
@@ -319,6 +509,7 @@ function QueueTableSkeleton() {
           <TableBody>
             {Array.from({ length: 6 }).map((_, i) => (
               <TableRow key={i}>
+                <TableCell><Skeleton className="h-3.5 w-3.5" /></TableCell>
                 <TableCell><Skeleton className="h-4 w-32" /></TableCell>
                 <TableCell className="text-right"><Skeleton className="ml-auto h-4 w-12" /></TableCell>
                 <TableCell className="text-right"><Skeleton className="ml-auto h-4 w-8" /></TableCell>

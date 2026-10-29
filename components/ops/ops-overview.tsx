@@ -171,9 +171,23 @@ export function OpsOverview() {
             ) : (
               <div className="space-y-1.5">
                 {target.queueTop.map((queue) => (
-                  <div key={queue.name} className="flex items-center justify-between text-xs">
+                  <div key={queue.name} className="flex items-center justify-between gap-3 text-xs">
                     <span className="truncate font-mono text-muted-foreground">{queue.name}</span>
-                    <span className="font-mono font-medium">{formatCompactNumber(queue.value)}</span>
+                    <span className="flex shrink-0 items-center gap-2">
+                      <span
+                        className={`font-mono text-[11px] ${
+                          (queue.perHour ?? 0) > 0
+                            ? "text-warning"
+                            : (queue.perHour ?? 0) < 0
+                              ? "text-success"
+                              : "text-muted-foreground"
+                        }`}
+                      >
+                        {(queue.perHour ?? 0) > 0 ? "+" : ""}
+                        {formatCompactNumber(queue.perHour ?? 0)}/h
+                      </span>
+                      <span className="font-mono font-medium">{formatCompactNumber(queue.value)}</span>
+                    </span>
                   </div>
                 ))}
               </div>

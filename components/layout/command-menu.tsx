@@ -10,6 +10,7 @@ import {
   Layers,
   LayoutDashboard,
   Moon,
+  Network,
   Pause,
   Play,
   Radio,
@@ -142,6 +143,9 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
           </CommandItem>
           <CommandItem onSelect={() => run(() => router.push("/channels"))}>
             <Radio /> {t("nav.channels")}
+          </CommandItem>
+          <CommandItem onSelect={() => run(() => router.push("/topology"))}>
+            <Network /> {t("nav.topology")}
           </CommandItem>
           <CommandItem onSelect={() => run(() => router.push("/admin"))}>
             <Settings2 /> {t("nav.admin")}

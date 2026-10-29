@@ -28,6 +28,8 @@ export async function generateMetadata(): Promise<Metadata> {
     title: `${branding.name} ${branding.productName}`,
     description: translate(locale, "app.description"),
     applicationName: branding.name,
+    manifest: "/manifest.webmanifest",
+    icons: { icon: "/icon.svg" },
   }
 }
 

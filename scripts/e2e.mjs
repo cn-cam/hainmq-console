@@ -96,6 +96,11 @@ async function main() {
   {
     const res = await fetch(`${APP}/api/health`)
     check('GET /api/health → 200', res.status === 200)
+    check(
+      'security headers present',
+      res.headers.get('x-content-type-options') === 'nosniff' &&
+        res.headers.get('x-frame-options') === 'DENY',
+    )
   }
   {
     const res = await fetch(`${APP}/api/rabbitmq/overview`, { redirect: 'manual' })
@@ -113,6 +118,14 @@ async function main() {
       res.status >= 300 && res.status < 400 && loc.includes('/login') && loc.includes('next=%2Fqueues'),
       `got ${res.status} → ${loc}`,
     )
+  }
+  {
+    const res = await fetch(`${APP}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Origin: 'https://evil.example' },
+      body: JSON.stringify({ username: 'admin', password: 'admin' }),
+    })
+    check('cross-origin write rejected', res.status === 403)
   }
 
   console.log('\nLogin (RabbitMQ 4.x mock — tags as array; issues #19, #23)')
@@ -224,6 +237,11 @@ async function main() {
     const body = await res.json()
     check('vhosts list (header switcher)', Array.isArray(body) && body.some((v) => v.name === '/'))
   }
+  {
+    const res = await authed('/api/rabbitmq/bindings')
+    const body = await res.json()
+    check('bindings list for topology', Array.isArray(body) && body.length > 0)
+  }
 
   console.log('\nAdmin objects')
   {
@@ -250,6 +268,16 @@ async function main() {
     const res = await authed('/api/rabbitmq/feature-flags')
     const body = await res.json()
     check('feature flags list', Array.isArray(body) && body.length > 0)
+  }
+  {
+    const res = await authed('/api/rabbitmq/shovels')
+    const body = await res.json()
+    check('shovels list', Array.isArray(body) && body.length > 0)
+  }
+  {
+    const res = await authed('/api/rabbitmq/federation-links')
+    const body = await res.json()
+    check('federation links list', Array.isArray(body) && body.length > 0)
   }
   {
     const res = await authed('/api/rabbitmq/parameters')
@@ -434,6 +462,24 @@ async function main() {
     const target = await targetRes.json()
     check('ops target create for approvals', targetRes.status === 201 && Boolean(target?.id), JSON.stringify(target))
 
+    const mcpVhosts = await fetch(`${APP}/api/ops/mcp`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer e2e-mcp-token',
+      },
+      body: JSON.stringify({
+        tool: 'mq_list_vhosts',
+        arguments: { target_id: target?.id },
+      }),
+    })
+    const mcpVhostsBody = await mcpVhosts.json()
+    check(
+      'MCP admin read tool',
+      mcpVhosts.status === 200 && Array.isArray(mcpVhostsBody?.result),
+      JSON.stringify(mcpVhostsBody),
+    )
+
     const channelRes = await authed('/api/ops/channels', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -573,6 +619,13 @@ async function main() {
     )
     const body = await res.json()
     check('queue message peek', Array.isArray(body) && body.length > 0 && 'payload' in body[0])
+  }
+  {
+    const res = await authed(
+      `/api/rabbitmq/queues/${encodeURIComponent('/')}/orders.created/consumers/${encodeURIComponent('ctag-0.orders.created')}`,
+      { method: 'DELETE' },
+    )
+    check('consumer cancel', res.ok)
   }
   {
     const res = await authed('/api/publish', {

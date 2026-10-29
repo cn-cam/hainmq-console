@@ -234,6 +234,10 @@ const server = http.createServer((req, res) => {
       res.writeHead(204); return res.end()
     }
 
+    if (/^\/api\/queues\/[^/]+\/[^/]+\/consumers\/[^/]+$/.test(path) && req.method === 'DELETE') {
+      res.writeHead(204); return res.end()
+    }
+
     if (/^\/api\/queues\/[^/]+\/[^/]+\/get$/.test(path) && req.method === 'POST') {
       let count = 10
       try { count = JSON.parse(body).count ?? 10 } catch {}
@@ -323,8 +327,29 @@ const server = http.createServer((req, res) => {
       return sendJSON(res, 200, chans)
     }
 
+    if (path === '/api/bindings' || path === '/api/bindings/') {
+      return sendJSON(res, 200, [
+        { source: 'orders', destination: 'orders.created', destination_type: 'queue', routing_key: 'orders.created.*', arguments: {}, vhost: '/', properties_key: 'orders.created.%2A' },
+        { source: 'orders', destination: 'orders.shipped', destination_type: 'queue', routing_key: 'orders.shipped.#', arguments: { 'x-match': 'all' }, vhost: '/', properties_key: 'orders.shipped.%23' },
+        { source: 'events', destination: 'analytics.events', destination_type: 'queue', routing_key: '', arguments: {}, vhost: '/', properties_key: '~' },
+        { source: 'dlx', destination: 'emails.dlq', destination_type: 'queue', routing_key: 'emails.dlq', arguments: {}, vhost: '/', properties_key: 'emails.dlq' },
+      ])
+    }
+
     if (path === '/api/nodes') return sendJSON(res, 200, [nodePayload()])
     if (/^\/api\/nodes\/[^/]+$/.test(path)) return sendJSON(res, 200, nodePayload())
+
+    if (path === '/api/shovels') {
+      return sendJSON(res, 200, [
+        { name: 'orders-shovel', vhost: '/', state: 'running', type: 'dynamic', source: 'orders', destination: 'orders.created' },
+      ])
+    }
+
+    if (path === '/api/federation-links') {
+      return sendJSON(res, 200, [
+        { node: 'rabbit@mock', vhost: '/', exchange: 'events', upstream: 'upstream-a', status: 'running' },
+      ])
+    }
 
     if (path === '/api/vhosts') return sendJSON(res, 200, VHOSTS)
     const vhostMatch = path.match(/^\/api\/vhosts\/([^/]+)$/)

@@ -301,6 +301,37 @@ export async function executeOpsTool(
       return fetchTargetJson(target, "/api/nodes")
     }
 
+    case "mq_list_vhosts": {
+      const target = pickTarget(targetId)
+      return fetchTargetJson(target, "/api/vhosts")
+    }
+
+    case "mq_list_users": {
+      const target = pickTarget(targetId)
+      const users = await fetchTargetJson<Array<Record<string, unknown>>>(target, "/api/users")
+      return users.map((user) => {
+        const safe = { ...user }
+        delete safe.password_hash
+        delete safe.hashing_algorithm
+        return safe
+      })
+    }
+
+    case "mq_list_policies": {
+      const target = pickTarget(targetId)
+      return fetchTargetJson(target, "/api/policies")
+    }
+
+    case "mq_list_parameters": {
+      const target = pickTarget(targetId)
+      return fetchTargetJson(target, "/api/parameters")
+    }
+
+    case "mq_list_feature_flags": {
+      const target = pickTarget(targetId)
+      return fetchTargetJson(target, "/api/feature-flags")
+    }
+
     case "mq_search_audit_logs": {
       return listAuditLogs(Math.min(500, Math.max(1, num(args, "limit", 100))))
     }

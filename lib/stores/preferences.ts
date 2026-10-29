@@ -12,6 +12,14 @@ export const REFRESH_INTERVALS = [
   { label: 'Off', value: 0 },
 ] as const
 
+export interface SavedQueueView {
+  id: string
+  name: string
+  search: string
+  stateFilter: string
+  vhost: string | null
+}
+
 interface PreferencesState {
   sidebarCollapsed: boolean
   toggleSidebar: () => void
@@ -21,6 +29,11 @@ interface PreferencesState {
   setRefreshInterval: (ms: number) => void
   vhost: string | null // null = all vhosts
   setVhost: (v: string | null) => void
+  favorites: string[]
+  toggleFavorite: (key: string) => void
+  savedQueueViews: SavedQueueView[]
+  saveQueueView: (view: SavedQueueView) => void
+  removeQueueView: (id: string) => void
 }
 
 export const usePreferences = create<PreferencesState>()(
@@ -34,6 +47,25 @@ export const usePreferences = create<PreferencesState>()(
       setRefreshInterval: (refreshInterval) => set({ refreshInterval }),
       vhost: null,
       setVhost: (vhost) => set({ vhost }),
+      favorites: [],
+      toggleFavorite: (key) =>
+        set((state) => ({
+          favorites: state.favorites.includes(key)
+            ? state.favorites.filter((item) => item !== key)
+            : [...state.favorites, key],
+        })),
+      savedQueueViews: [],
+      saveQueueView: (view) =>
+        set((state) => ({
+          savedQueueViews: [
+            ...state.savedQueueViews.filter((item) => item.id !== view.id),
+            view,
+          ],
+        })),
+      removeQueueView: (id) =>
+        set((state) => ({
+          savedQueueViews: state.savedQueueViews.filter((item) => item.id !== id),
+        })),
     }),
     { name: 'hainmq-preferences' },
   ),

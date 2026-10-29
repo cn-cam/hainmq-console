@@ -7,7 +7,7 @@ import { fetchTargetJson } from "./rabbitmq"
 import { approveAndExecute, rejectApproval } from "./approvals"
 import { runChat, testModelProfile } from "./chat"
 import { executeOpsTool } from "./mcp"
-import { getDb, insertAuditLog } from "./db"
+import { getDb, insertAuditLog, now } from "./db"
 import { getSettings, updateSettings } from "./settings"
 import {
   appendChatMessage,
@@ -172,9 +172,9 @@ function latestMetrics(targetId: number, targetName: string) {
 }
 
 function topQueues(targetId: number) {
-  return getDb()
+  const rows = getDb()
     .prepare(
-      `SELECT s.object_name AS name, s.value
+      `SELECT s.object_name AS name, s.value, s.ts
        FROM ops_samples s
        INNER JOIN (
          SELECT object_name, MAX(ts) AS max_ts
@@ -185,7 +185,27 @@ function topQueues(targetId: number) {
        WHERE s.target_id = ? AND s.object_type = 'queue' AND s.metric = 'queue.messages'
        ORDER BY s.value DESC LIMIT 10`,
     )
-    .all(targetId, targetId) as Array<{ name: string; value: number }>
+    .all(targetId, targetId) as Array<{ name: string; value: number; ts: number }>
+
+  const since = now() - 60 * 60 * 1000
+  return rows.map((row) => {
+    const first = getDb()
+      .prepare(
+        `SELECT value, ts FROM ops_samples
+         WHERE target_id = ? AND object_type = 'queue' AND object_name = ?
+           AND metric = 'queue.messages' AND ts >= ?
+         ORDER BY ts ASC LIMIT 1`,
+      )
+      .get(targetId, row.name, since) as { value: number; ts: number } | undefined
+    const delta = first ? row.value - first.value : 0
+    const span = first ? Math.max(1, row.ts - first.ts) : 0
+    return {
+      name: row.name,
+      value: row.value,
+      delta,
+      perHour: span ? Math.round((delta * 3_600_000) / span) : 0,
+    }
+  })
 }
 
 function recentSeries(targetId: number, targetName: string, metric: string) {
@@ -245,6 +265,7 @@ function parseRuleInput(body: Record<string, unknown>, partial = false): Partial
   if (!partial || body.channelIds !== undefined) input.channelIds = asNumberArray(body.channelIds)
   if (body.escalationChannelIds !== undefined) input.escalationChannelIds = asNumberArray(body.escalationChannelIds)
   if (body.escalationAfterSec !== undefined) input.escalationAfterSec = Math.max(0, asNumber(body.escalationAfterSec, "escalationAfterSec", 0))
+  if (body.runbookUrl !== undefined) input.runbookUrl = body.runbookUrl ? String(body.runbookUrl) : null
   if (body.template !== undefined) input.template = body.template ? String(body.template) : null
   if (body.cooldownSec !== undefined) input.cooldownSec = Math.max(60, asNumber(body.cooldownSec, "cooldownSec", 900))
 

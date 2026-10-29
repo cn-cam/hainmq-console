@@ -50,6 +50,7 @@ type RuleForm = {
   channelIds: number[]
   escalationChannelIds: number[]
   escalationAfterSec: number
+  runbookUrl: string
   template: string
   cooldownSec: number
 }
@@ -68,6 +69,7 @@ const EMPTY_FORM: RuleForm = {
   channelIds: [],
   escalationChannelIds: [],
   escalationAfterSec: 300,
+  runbookUrl: "",
   template: "",
   cooldownSec: 900,
 }
@@ -130,6 +132,7 @@ export function OpsRules() {
       channelIds: rule.channelIds,
       escalationChannelIds: rule.escalationChannelIds,
       escalationAfterSec: rule.escalationAfterSec,
+      runbookUrl: rule.runbookUrl || "",
       template: rule.template || "",
       cooldownSec: rule.cooldownSec,
     })
@@ -158,6 +161,7 @@ export function OpsRules() {
         durationSec: Number(form.durationSec),
         cooldownSec: Number(form.cooldownSec),
         escalationAfterSec: Number(form.escalationAfterSec),
+        runbookUrl: form.runbookUrl || null,
         template: form.template || null,
       }
       if (editing) {
@@ -502,6 +506,17 @@ export function OpsRules() {
                 }
                 className="h-9 font-mono text-sm"
               />
+            </div>
+
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label className="text-xs">{tr("rules.runbookUrl")}</Label>
+              <Input
+                value={form.runbookUrl}
+                onChange={(event) => setForm({ ...form, runbookUrl: event.target.value })}
+                placeholder="https://wiki.example.com/runbooks/queue-backlog"
+                className="h-9 font-mono text-sm"
+              />
+              <p className="text-[10px] text-muted-foreground">{tr("rules.runbookHint")}</p>
             </div>
 
             <div className="space-y-1.5 sm:col-span-2">

@@ -298,5 +298,55 @@
       "required": ["name"],
       "additionalProperties": false
     }
+  },
+  {
+    "name": "mq_list_vhosts",
+    "description": "List virtual hosts.",
+    "write": false,
+    "inputSchema": {
+      "type": "object",
+      "properties": { "target_id": { "type": "number" } },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "mq_list_users",
+    "description": "List RabbitMQ users and tags (password hashes omitted).",
+    "write": false,
+    "inputSchema": {
+      "type": "object",
+      "properties": { "target_id": { "type": "number" } },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "mq_list_policies",
+    "description": "List RabbitMQ policies.",
+    "write": false,
+    "inputSchema": {
+      "type": "object",
+      "properties": { "target_id": { "type": "number" } },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "mq_list_parameters",
+    "description": "List RabbitMQ parameters.",
+    "write": false,
+    "inputSchema": {
+      "type": "object",
+      "properties": { "target_id": { "type": "number" } },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "mq_list_feature_flags",
+    "description": "List RabbitMQ feature flags.",
+    "write": false,
+    "inputSchema": {
+      "type": "object",
+      "properties": { "target_id": { "type": "number" } },
+      "additionalProperties": false
+    }
   }
 ]

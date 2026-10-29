@@ -4,6 +4,7 @@ import * as React from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
 import {
+  Bell,
   Check,
   ChevronDown,
   Command as CommandIcon,
@@ -44,6 +45,7 @@ import { usePolling } from "@/hooks/use-polling"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
 import type { ClusterSummary, VHost } from "@/lib/rabbitmq/types"
+import type { OpsAlert } from "@/lib/ops/types"
 
 const PAGE_TITLES: Record<string, MessageKey> = {
   "/": "nav.overview",
@@ -51,6 +53,7 @@ const PAGE_TITLES: Record<string, MessageKey> = {
   "/exchanges": "nav.exchanges",
   "/connections": "nav.connections",
   "/channels": "nav.channels",
+  "/topology": "nav.topology",
   "/admin": "nav.admin",
 }
 
@@ -74,6 +77,35 @@ export function Header({ onMobileMenu }: { onMobileMenu?: () => void }) {
   const [paletteOpen, setPaletteOpen] = React.useState(false)
   const [clusters, setClusters] = React.useState<ClusterSummary[]>([])
   const [switchingCluster, setSwitchingCluster] = React.useState(false)
+  const [alerts, setAlerts] = React.useState<OpsAlert[]>([])
+  const [hasOpsAccess, setHasOpsAccess] = React.useState(true)
+
+  React.useEffect(() => {
+    let cancelled = false
+    const load = async () => {
+      try {
+        const res = await fetch("/api/ops/alerts?limit=20", { cache: "no-store" })
+        if (res.status === 403) {
+          if (!cancelled) setHasOpsAccess(false)
+          return
+        }
+        if (!res.ok) return
+        const data = await res.json()
+        if (!cancelled && Array.isArray(data)) {
+          setAlerts(data.filter((alert: OpsAlert) => alert.status !== "resolved"))
+          setHasOpsAccess(true)
+        }
+      } catch {
+        // Keep the previous alert list on transient failures.
+      }
+    }
+    void load()
+    const timer = setInterval(() => void load(), 30_000)
+    return () => {
+      cancelled = true
+      clearInterval(timer)
+    }
+  }, [])
 
   React.useEffect(() => {
     let cancelled = false
@@ -271,6 +303,59 @@ export function Header({ onMobileMenu }: { onMobileMenu?: () => void }) {
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
+
+        {hasOpsAccess && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="relative h-8 w-8">
+                <Bell className="h-4 w-4" />
+                {alerts.length > 0 && (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-semibold text-destructive-foreground">
+                    {alerts.length > 99 ? "99+" : alerts.length}
+                  </span>
+                )}
+                <span className="sr-only">{t("header.alerts")}</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-[320px]">
+              <DropdownMenuLabel>{t("header.alerts")}</DropdownMenuLabel>
+              {alerts.length === 0 ? (
+                <div className="px-2 py-3 text-xs text-muted-foreground">
+                  {t("header.noAlerts")}
+                </div>
+              ) : (
+                alerts.slice(0, 6).map((alert) => (
+                  <DropdownMenuItem
+                    key={alert.id}
+                    onClick={() => router.push("/ops/alerts")}
+                    className="items-start gap-2"
+                  >
+                    <span
+                      className={cn(
+                        "mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full",
+                        alert.severity === "critical"
+                          ? "bg-destructive"
+                          : alert.severity === "warning"
+                            ? "bg-warning"
+                            : "bg-muted-foreground",
+                      )}
+                    />
+                    <span className="min-w-0">
+                      <span className="block truncate text-xs">{alert.message}</span>
+                      <span className="block truncate font-mono text-[10px] text-muted-foreground">
+                        {alert.objectName} · {alert.metric}
+                      </span>
+                    </span>
+                  </DropdownMenuItem>
+                ))
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => router.push("/ops/alerts")}>
+                {t("header.viewAlerts")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
 
         {/* Command palette */}
         <Tooltip>

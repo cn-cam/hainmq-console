@@ -12,6 +12,8 @@ import { AdminPolicies } from "./admin-policies"
 import { AdminParameters } from "./admin-parameters"
 import { AdminNodes } from "./admin-nodes"
 import { AdminFeatureFlags } from "./admin-feature-flags"
+import { AdminShovels } from "./admin-shovels"
+import { AdminFederation } from "./admin-federation"
 import { AdminDefinitions } from "./admin-definitions"
 
 const TABS = [
@@ -22,6 +24,8 @@ const TABS = [
   { key: "parameters", labelKey: "tabs.parameters" },
   { key: "nodes", labelKey: "tabs.nodes" },
   { key: "featureFlags", labelKey: "tabs.featureFlags" },
+  { key: "shovels", labelKey: "tabs.shovels" },
+  { key: "federation", labelKey: "tabs.federation" },
   { key: "definitions", labelKey: "tabs.definitions" },
 ] as const satisfies ReadonlyArray<{ key: string; labelKey: AdminTextKey }>
 
@@ -60,6 +64,8 @@ export function AdminPage() {
       {tab === "parameters" && <AdminParameters />}
       {tab === "nodes" && <AdminNodes />}
       {tab === "featureFlags" && <AdminFeatureFlags />}
+      {tab === "shovels" && <AdminShovels />}
+      {tab === "federation" && <AdminFederation />}
       {tab === "definitions" && <AdminDefinitions />}
     </div>
   )

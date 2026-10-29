@@ -27,6 +27,7 @@ export interface AlertPayload {
   threshold: number | null
   startedAt: string
   resolvedAt: string | null
+  runbookUrl: string | null
   timestamp: string
 }
 
@@ -77,6 +78,7 @@ export function buildAlertPayload(
     threshold: alert.threshold,
     startedAt: formatDate(alert.startedAt, timezone) ?? "",
     resolvedAt: formatDate(alert.resolvedAt, timezone),
+    runbookUrl: rule.runbookUrl ?? null,
     timestamp: new Date().toISOString(),
   }
 }
@@ -96,6 +98,7 @@ export function testPayload(): AlertPayload {
     threshold: null,
     startedAt: new Date().toISOString(),
     resolvedAt: null,
+    runbookUrl: null,
     timestamp: new Date().toISOString(),
   }
 }
@@ -124,7 +127,7 @@ export async function sendEmail(config: EmailConfig, payload: AlertPayload): Pro
     },
   })
 
-  const text = `${payload.message}\n\n目标：${payload.target}\n对象：${payload.objectType}/${payload.objectName}\n指标：${payload.metric}\n当前值：${payload.value ?? "-"}\n阈值：${payload.threshold ?? "-"}\n时间：${payload.timestamp}`
+  const text = `${payload.message}\n\n目标：${payload.target}\n对象：${payload.objectType}/${payload.objectName}\n指标：${payload.metric}\n当前值：${payload.value ?? "-"}\n阈值：${payload.threshold ?? "-"}\n时间：${payload.timestamp}${payload.runbookUrl ? `\nRunbook：${payload.runbookUrl}` : ""}`
   const info = await transporter.sendMail({
     from: config.fromName ? `"${config.fromName}" <${config.from}>` : config.from,
     to: config.to.join(","),
@@ -211,7 +214,7 @@ async function assertSafeWebhookUrl(url: string, allowPrivate: boolean): Promise
 function webhookBody(config: WebhookConfig, payload: AlertPayload): string {
   if (config.bodyTemplate) return renderTemplate(config.bodyTemplate, payload)
 
-  const text = `${payload.title}\n${payload.message}\n${payload.target} / ${payload.objectName}`
+  const text = `${payload.title}\n${payload.message}\n${payload.target} / ${payload.objectName}${payload.runbookUrl ? `\n${payload.runbookUrl}` : ""}`
   switch (config.preset) {
     case "dingtalk":
       return JSON.stringify({
