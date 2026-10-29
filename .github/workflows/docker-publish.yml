@@ -44,22 +44,15 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: docker/login-action@v4
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
       - uses: docker/metadata-action@v6
         id: meta
         with:
           images: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/hainmq-console
           tags: |
             type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main' }}
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=sha,prefix=
           flavor: |
             latest=false
             suffix=-${{ matrix.suffix }}
@@ -110,22 +103,23 @@ jobs:
             type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main' }}
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=sha,prefix=
           flavor: |
             latest=false
 
       - name: Create multi-arch tags
         env:
           TAGS: ${{ steps.meta.outputs.tags }}
+          GHCR_IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
         run: |
           set -euo pipefail
           while IFS= read -r tag; do
             [ -n "$tag" ] || continue
-            echo "Merging $tag"
+            tag_name="${tag##*:}"
+            echo "Merging $tag from ${GHCR_IMAGE}:${tag_name}-amd64 and ${GHCR_IMAGE}:${tag_name}-arm64"
             docker buildx imagetools create \
               --tag "$tag" \
-              "${tag}-amd64" \
-              "${tag}-arm64"
+              "${GHCR_IMAGE}:${tag_name}-amd64" \
+              "${GHCR_IMAGE}:${tag_name}-arm64"
           done <<< "$TAGS"
 
       - name: Inspect image
