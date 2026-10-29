@@ -23,6 +23,7 @@ const OPS_ENV = {
   OPS_ENCRYPTION_KEY: Buffer.alloc(32, 1).toString('base64'),
   OPS_ADMIN_USERS: 'admin',
   OPS_MCP_TOKEN: 'e2e-mcp-token',
+  OPS_MCP_ALLOW_WRITE: 'true',
 }
 
 const procs = []
