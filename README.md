@@ -39,6 +39,8 @@ RabbitMQ is a trademark of its respective owner. This project is not affiliated 
 
 **Auth** — Pass-through authentication. Each user logs in with their own RabbitMQ credentials. No server-side password storage. Works on RabbitMQ 3.x and 4.x.
 
+**Administration** — Manage virtual hosts, users, permissions, policies, nodes and feature flags, and import/export RabbitMQ definitions. RabbitMQ's own permissions still apply.
+
 **Multi-cluster** — Configure multiple RabbitMQ Management endpoints with `RABBITMQ_CLUSTERS`; choose a cluster at login and switch from the header. Credentials are validated against the selected cluster and remain pass-through.
 
 **Theming** — Dark and light mode with a refined, minimal UI. Fully responsive, down to mobile.

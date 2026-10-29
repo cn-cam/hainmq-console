@@ -236,6 +236,44 @@ export interface VHost {
   tracing?: boolean
 }
 
+export interface RabbitMQUserAccount {
+  name: string
+  tags: string[] | string
+  password_hash?: string
+  hashing_algorithm?: string
+}
+
+export interface RabbitMQPermission {
+  user: string
+  vhost: string
+  configure: string
+  write: string
+  read: string
+}
+
+export interface RabbitMQPolicy {
+  name: string
+  vhost: string
+  pattern: string
+  apply_to: string
+  definition: Record<string, unknown>
+  priority: number
+}
+
+export interface RabbitMQParameter {
+  component: string
+  vhost: string
+  name: string
+  value: unknown
+}
+
+export interface RabbitMQFeatureFlag {
+  name: string
+  state: string
+  stability: string
+  provided_by?: string
+}
+
 // ── Messages (from queue get) ────────────────────────────────────────
 
 export interface QueueMessage {

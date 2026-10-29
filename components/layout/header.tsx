@@ -51,6 +51,7 @@ const PAGE_TITLES: Record<string, MessageKey> = {
   "/exchanges": "nav.exchanges",
   "/connections": "nav.connections",
   "/channels": "nav.channels",
+  "/admin": "nav.admin",
 }
 
 const STATUS_META = {

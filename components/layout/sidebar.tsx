@@ -11,6 +11,7 @@ import {
   PanelLeft,
   PanelLeftClose,
   Radio,
+  Settings2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { usePreferences } from "@/lib/stores/preferences"
@@ -32,6 +33,7 @@ const navItems: Array<{
   { href: "/connections", labelKey: "nav.connections", icon: Cable },
   { href: "/channels", labelKey: "nav.channels", icon: Radio },
   { href: "/ops", labelKey: "nav.ops", icon: Activity },
+  { href: "/admin", labelKey: "nav.admin", icon: Settings2 },
 ]
 
 function NavLink({

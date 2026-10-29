@@ -64,6 +64,7 @@ export const zhCN: Record<MessageKey, string> = {
   "nav.connections": "连接",
   "nav.channels": "通道",
   "nav.ops": "运维",
+  "nav.admin": "管理",
   "nav.collapse": "收起",
   "nav.navigation": "导航",
 
@@ -134,6 +135,8 @@ export const zhCN: Record<MessageKey, string> = {
   "page.connections.description": "监控和管理 RabbitMQ 活动连接",
   "page.channels.title": "通道",
   "page.channels.description": "查看通道状态、预取和消费者活动",
+  "page.admin.title": "RabbitMQ 管理",
+  "page.admin.description": "管理虚拟主机、用户、权限、策略、节点和定义",
 
   "dashboard.totalMessages": "消息总数",
   "dashboard.messagesSubtitle": "{ready} 条就绪 · {unacked} 条未确认",

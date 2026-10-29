@@ -13,6 +13,7 @@ import {
   Pause,
   Play,
   Radio,
+  Settings2,
   Sun,
 } from "lucide-react"
 import {
@@ -141,6 +142,9 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
           </CommandItem>
           <CommandItem onSelect={() => run(() => router.push("/channels"))}>
             <Radio /> {t("nav.channels")}
+          </CommandItem>
+          <CommandItem onSelect={() => run(() => router.push("/admin"))}>
+            <Settings2 /> {t("nav.admin")}
           </CommandItem>
         </CommandGroup>
 

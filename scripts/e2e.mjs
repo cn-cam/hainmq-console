@@ -212,6 +212,103 @@ async function main() {
     const body = await res.json()
     check('vhosts list (header switcher)', Array.isArray(body) && body.some((v) => v.name === '/'))
   }
+
+  console.log('\nAdmin objects')
+  {
+    const res = await authed('/api/rabbitmq/users')
+    const body = await res.json()
+    check('users list', Array.isArray(body) && body.some((user) => user.name === 'admin'))
+  }
+  {
+    const res = await authed('/api/rabbitmq/permissions')
+    const body = await res.json()
+    check('permissions list', Array.isArray(body) && body.length > 0)
+  }
+  {
+    const res = await authed('/api/rabbitmq/policies')
+    const body = await res.json()
+    check('policies list', Array.isArray(body) && body.length > 0)
+  }
+  {
+    const res = await authed('/api/rabbitmq/nodes')
+    const body = await res.json()
+    check('nodes list', Array.isArray(body) && body[0]?.name === 'rabbit@mock')
+  }
+  {
+    const res = await authed('/api/rabbitmq/feature-flags')
+    const body = await res.json()
+    check('feature flags list', Array.isArray(body) && body.length > 0)
+  }
+  {
+    const res = await authed('/api/rabbitmq/parameters')
+    const body = await res.json()
+    check('parameters list', Array.isArray(body))
+  }
+  {
+    const res = await authed('/api/rabbitmq/definitions')
+    const body = await res.json()
+    check(
+      'definitions export',
+      res.status === 200 && Array.isArray(body?.vhosts) && Array.isArray(body?.users),
+    )
+  }
+  {
+    const res = await authed('/api/rabbitmq/definitions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ vhosts: [] }),
+    })
+    check('definitions import', res.status === 201 || res.status === 200)
+  }
+  {
+    const vhostPath = `/api/rabbitmq/vhosts/${encodeURIComponent('e2e-temp')}`
+    const create = await authed(vhostPath, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ description: 'E2E', tags: ['e2e'], tracing: false }),
+    })
+    check('vhost create', create.status === 201 || create.status === 200)
+    const remove = await authed(vhostPath, { method: 'DELETE' })
+    check('vhost delete', remove.ok)
+  }
+  {
+    const userName = 'e2e-user'
+    const userPath = `/api/rabbitmq/users/${encodeURIComponent(userName)}`
+    const create = await authed(userPath, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: 'secret', tags: ['monitoring'] }),
+    })
+    check('user create', create.status === 201 || create.status === 200)
+
+    const permissionPath = `/api/rabbitmq/permissions/${encodeURIComponent('/')}/${encodeURIComponent(userName)}`
+    const permission = await authed(permissionPath, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ configure: '', write: '', read: '.*' }),
+    })
+    check('permission create', permission.status === 201 || permission.status === 200)
+
+    const policyPath = `/api/rabbitmq/policies/${encodeURIComponent('/')}/e2e-policy`
+    const policy = await authed(policyPath, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        pattern: 'e2e.*',
+        definition: { 'max-length': 10 },
+        priority: 1,
+        'apply-to': 'queues',
+      }),
+    })
+    check('policy create', policy.status === 201 || policy.status === 200)
+
+    const policyRemove = await authed(policyPath, { method: 'DELETE' })
+    check('policy delete', policyRemove.ok)
+    const permissionRemove = await authed(permissionPath, { method: 'DELETE' })
+    check('permission delete', permissionRemove.ok)
+    const userRemove = await authed(userPath, { method: 'DELETE' })
+    check('user delete', userRemove.ok)
+  }
   {
     const res = await authed('/api/rabbitmq/connections')
     const body = await res.json()

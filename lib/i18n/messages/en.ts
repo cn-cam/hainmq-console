@@ -62,6 +62,7 @@ export const en = {
   "nav.connections": "Connections",
   "nav.channels": "Channels",
   "nav.ops": "Operations",
+  "nav.admin": "Admin",
   "nav.collapse": "Collapse",
   "nav.navigation": "Navigation",
 
@@ -132,6 +133,8 @@ export const en = {
   "page.connections.description": "Monitor and manage active RabbitMQ connections",
   "page.channels.title": "Channels",
   "page.channels.description": "View channel state, prefetch, and consumer activity",
+  "page.admin.title": "RabbitMQ administration",
+  "page.admin.description": "Manage virtual hosts, users, permissions, policies, nodes and definitions",
 
   "dashboard.totalMessages": "Total Messages",
   "dashboard.messagesSubtitle": "{ready} ready · {unacked} unacked",

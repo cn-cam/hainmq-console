@@ -58,6 +58,35 @@ const QUEUE_NAMES = [
   ['notifications.push', 'running', 87, 2, 9.9],
 ]
 
+const VHOSTS = [
+  { name: '/', description: 'Default virtual host', tags: [], tracing: false },
+  { name: 'staging', description: '', tags: [], tracing: false },
+]
+
+const PERMISSIONS = [
+  { user: 'admin', vhost: '/', configure: '.*', write: '.*', read: '.*' },
+  { user: 'monitor', vhost: '/', configure: '', write: '', read: '.*' },
+]
+
+const POLICIES = [
+  {
+    name: 'dlq-policy',
+    vhost: '/',
+    pattern: '.*\\.dlq$',
+    apply_to: 'queues',
+    definition: { 'dead-letter-exchange': 'dlx', 'message-ttl': 86400000 },
+    priority: 1,
+  },
+]
+
+const PARAMETERS = []
+
+const FEATURE_FLAGS = [
+  { name: 'maintenance_mode_status', state: 'enabled', stability: 'stable' },
+  { name: 'stream_queue', state: 'enabled', stability: 'stable' },
+  { name: 'classic_queue_mirroring', state: 'disabled', stability: 'deprecated' },
+]
+
 function queues(age, incr) {
   return QUEUE_NAMES.map(([name, state, messages, consumers, rt]) => ({
     name, vhost: '/', state, durable: true, auto_delete: false, exclusive: false,
@@ -79,6 +108,36 @@ function sendJSON(res, code, body) {
   const data = JSON.stringify(body)
   res.writeHead(code, { 'content-type': 'application/json' })
   res.end(data)
+}
+
+function parseBody(raw) {
+  try {
+    return JSON.parse(raw || '{}')
+  } catch {
+    return {}
+  }
+}
+
+function nodePayload() {
+  return {
+    name: 'rabbit@mock',
+    mem_used: 214_748_364,
+    mem_limit: 6_442_450_944,
+    disk_free: 187_904_819_200,
+    disk_free_limit: 50_000_000,
+    fd_used: 42,
+    fd_total: 1_048_576,
+    sockets_used: 8,
+    sockets_total: 943_626,
+    proc_used: 512,
+    proc_total: 1_048_576,
+    uptime: Date.now() - START + 86_400_000 * 12,
+    run_queue: 1,
+    processors: 8,
+    partitions: [],
+    mem_alarm: false,
+    disk_free_alarm: false,
+  }
 }
 
 const server = http.createServer((req, res) => {
@@ -264,22 +323,143 @@ const server = http.createServer((req, res) => {
       return sendJSON(res, 200, chans)
     }
 
-    if (/^\/api\/nodes\/[^/]+$/.test(path)) {
-      return sendJSON(res, 200, {
-        name: 'rabbit@mock', mem_used: 214_748_364, mem_limit: 6_442_450_944,
-        disk_free: 187_904_819_200, disk_free_limit: 50_000_000,
-        fd_used: 42, fd_total: 1_048_576, sockets_used: 8, sockets_total: 943_626,
-        proc_used: 512, proc_total: 1_048_576, uptime: Date.now() - START + 86_400_000 * 12,
-        run_queue: 1, processors: 8,
-        partitions: [], mem_alarm: false, disk_free_alarm: false,
-      })
+    if (path === '/api/nodes') return sendJSON(res, 200, [nodePayload()])
+    if (/^\/api\/nodes\/[^/]+$/.test(path)) return sendJSON(res, 200, nodePayload())
+
+    if (path === '/api/vhosts') return sendJSON(res, 200, VHOSTS)
+    const vhostMatch = path.match(/^\/api\/vhosts\/([^/]+)$/)
+    if (vhostMatch) {
+      const name = decodeURIComponent(vhostMatch[1])
+      if (req.method === 'PUT') {
+        const data = parseBody(body)
+        const existing = VHOSTS.find((vhost) => vhost.name === name)
+        if (existing) {
+          existing.description = data.description ?? existing.description
+          existing.tags = data.tags ?? existing.tags
+          existing.tracing = data.tracing ?? existing.tracing
+        } else {
+          VHOSTS.push({
+            name,
+            description: data.description ?? '',
+            tags: data.tags ?? [],
+            tracing: Boolean(data.tracing),
+          })
+        }
+        return sendJSON(res, 201, {})
+      }
+      if (req.method === 'DELETE') {
+        const index = VHOSTS.findIndex((vhost) => vhost.name === name)
+        if (index >= 0) VHOSTS.splice(index, 1)
+        res.writeHead(204)
+        return res.end()
+      }
     }
 
-    if (path === '/api/vhosts') {
-      return sendJSON(res, 200, [
-        { name: '/', description: 'Default virtual host', tags: [], tracing: false },
-        { name: 'staging', description: '', tags: [], tracing: false },
-      ])
+    if (path === '/api/users') {
+      return sendJSON(
+        res,
+        200,
+        Object.entries(USERS).map(([name, value]) => ({ name, tags: value.tags })),
+      )
+    }
+    const userMatch = path.match(/^\/api\/users\/([^/]+)$/)
+    if (userMatch) {
+      const name = decodeURIComponent(userMatch[1])
+      if (req.method === 'PUT') {
+        const data = parseBody(body)
+        const existing = USERS[name]
+        USERS[name] = {
+          password: data.password || existing?.password || '',
+          tags: data.tags ?? existing?.tags ?? [],
+        }
+        return sendJSON(res, 201, {})
+      }
+      if (req.method === 'DELETE') {
+        delete USERS[name]
+        res.writeHead(204)
+        return res.end()
+      }
+    }
+
+    if (path === '/api/permissions') return sendJSON(res, 200, PERMISSIONS)
+    const permissionMatch = path.match(/^\/api\/permissions\/([^/]+)\/([^/]+)$/)
+    if (permissionMatch) {
+      const vhost = decodeURIComponent(permissionMatch[1])
+      const userName = decodeURIComponent(permissionMatch[2])
+      if (req.method === 'PUT') {
+        const data = parseBody(body)
+        const existing = PERMISSIONS.find((item) => item.vhost === vhost && item.user === userName)
+        const next = {
+          user: userName,
+          vhost,
+          configure: data.configure ?? '',
+          write: data.write ?? '',
+          read: data.read ?? '',
+        }
+        if (existing) Object.assign(existing, next)
+        else PERMISSIONS.push(next)
+        return sendJSON(res, 201, {})
+      }
+      if (req.method === 'DELETE') {
+        const index = PERMISSIONS.findIndex((item) => item.vhost === vhost && item.user === userName)
+        if (index >= 0) PERMISSIONS.splice(index, 1)
+        res.writeHead(204)
+        return res.end()
+      }
+    }
+
+    if (path === '/api/policies') return sendJSON(res, 200, POLICIES)
+    const policyMatch = path.match(/^\/api\/policies\/([^/]+)\/([^/]+)$/)
+    if (policyMatch) {
+      const vhost = decodeURIComponent(policyMatch[1])
+      const name = decodeURIComponent(policyMatch[2])
+      if (req.method === 'PUT') {
+        const data = parseBody(body)
+        const existing = POLICIES.find((item) => item.vhost === vhost && item.name === name)
+        const next = {
+          name,
+          vhost,
+          pattern: data.pattern ?? '.*',
+          apply_to: data['apply-to'] ?? 'all',
+          definition: data.definition ?? {},
+          priority: Number(data.priority) || 0,
+        }
+        if (existing) Object.assign(existing, next)
+        else POLICIES.push(next)
+        return sendJSON(res, 201, {})
+      }
+      if (req.method === 'DELETE') {
+        const index = POLICIES.findIndex((item) => item.vhost === vhost && item.name === name)
+        if (index >= 0) POLICIES.splice(index, 1)
+        res.writeHead(204)
+        return res.end()
+      }
+    }
+
+    if (path === '/api/parameters') return sendJSON(res, 200, PARAMETERS)
+
+    if (path === '/api/feature-flags') return sendJSON(res, 200, FEATURE_FLAGS)
+    const flagMatch = path.match(/^\/api\/feature-flags\/([^/]+)\/enable$/)
+    if (flagMatch && req.method === 'PUT') {
+      const name = decodeURIComponent(flagMatch[1])
+      const flag = FEATURE_FLAGS.find((item) => item.name === name)
+      if (flag) flag.state = 'enabled'
+      return sendJSON(res, 200, {})
+    }
+
+    if (path === '/api/definitions' && req.method === 'GET') {
+      return sendJSON(res, 200, {
+        rabbit_version: MODE === '3' ? '3.13.7' : '4.2.2',
+        users: Object.entries(USERS).map(([name, value]) => ({ name, tags: value.tags })),
+        vhosts: VHOSTS,
+        permissions: PERMISSIONS,
+        policies: POLICIES,
+        queues: queues(0, 0),
+      })
+    }
+    if (path === '/api/definitions' && req.method === 'POST') {
+      parseBody(body)
+      return sendJSON(res, 201, {})
     }
 
     if (path.startsWith('/api/health/checks/')) return sendJSON(res, 200, { status: 'ok' })
