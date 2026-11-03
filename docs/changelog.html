@@ -324,10 +324,21 @@
         <p class="eyebrow">Changelog</p>
         <h1>更新日志</h1>
         <p class="lead">
-          记录海心云 MQ 管理台的功能、运维能力与部署变化。当前 Docker Hub 已发布版本为 2.1.4。
+          记录海心云 MQ 管理台的功能、运维能力与部署变化。当前 Docker Hub 已发布版本为 2.1.5。
         </p>
 
         <div class="timeline">
+          <section class="release">
+            <div class="release-head">
+              <h2>2.1.5</h2>
+              <span class="badge live">已发布</span>
+              <span class="date">2026-11-03</span>
+            </div>
+            <ul>
+              <li><strong>安全</strong>：通过 npm overrides 将 <code>minimatch</code> 固定到 <code>11.0.4</code>，修复 GHSA-g3hv-75wg-m249 / CVE-2026-118764（globparts 放大导致拒绝服务），<code>npm audit</code> 0 漏洞。</li>
+            </ul>
+          </section>
+
           <section class="release">
             <div class="release-head">
               <h2>2.1.4</h2>
