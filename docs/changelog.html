@@ -324,10 +324,22 @@
         <p class="eyebrow">Changelog</p>
         <h1>更新日志</h1>
         <p class="lead">
-          记录海心云 MQ 管理台的功能、运维能力与部署变化。当前 Docker Hub 已发布版本为 2.1.5。
+          记录海心云 MQ 管理台的功能、运维能力与部署变化。当前 Docker Hub 已发布版本为 2.1.6。
         </p>
 
         <div class="timeline">
+          <section class="release">
+            <div class="release-head">
+              <h2>2.1.6</h2>
+              <span class="badge live">已发布</span>
+              <span class="date">2026-11-13</span>
+            </div>
+            <ul>
+              <li><strong>依赖升级</strong>：Next.js <code>16.4.5</code>、eslint <code>10.14</code>、lucide-react <code>1.70</code>、motion <code>14.11</code>、nodemailer <code>10.4</code>、zustand <code>5.1</code>、Tailwind PostCSS <code>4.3.5</code>。</li>
+              <li><strong>运行时</strong>：<code>hono</code> 升级到 <code>4.13.18</code>，<code>@hono/node-server</code> 升级到 <code>2.1.8</code>。</li>
+              <li>CI 全绿：lint、typecheck、build、e2e、CodeQL、Trivy 与依赖审计全部通过。</li>
+            </ul>
+          </section>
           <section class="release">
             <div class="release-head">
               <h2>2.1.5</h2>
